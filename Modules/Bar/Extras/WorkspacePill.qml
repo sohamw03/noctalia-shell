@@ -83,6 +83,8 @@ Item {
     z: 0
 
     color: {
+      if (pillMouseArea.pressed)
+        return Color.mHoverPressed;
       if (pillMouseArea.containsMouse)
         return Color.mHover;
       if (workspace.isFocused)
@@ -136,13 +138,6 @@ Item {
             return Color.resolveOnColorKey(emptyColor);
           }
 
-          Behavior on color {
-            enabled: !Color.isTransitioning
-            ColorAnimation {
-              duration: Style.animationFast
-              easing.type: Easing.InOutQuad
-            }
-          }
         }
       }
     }
@@ -152,13 +147,6 @@ Item {
       NumberAnimation {
         duration: Style.animationNormal
         easing.type: Easing.OutBack
-      }
-    }
-    Behavior on color {
-      enabled: !Color.isTransitioning
-      ColorAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.InOutQuad
       }
     }
     Behavior on opacity {

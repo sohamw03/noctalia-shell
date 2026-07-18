@@ -20,6 +20,7 @@ Item {
   property bool oppositeDirection: false
   property string iconPosition: ""
   property bool hovered: false
+  property bool pressed: false
   property bool rotateText: false
   property color customBackgroundColor: "transparent"
   property color customTextIconColor: "transparent"
@@ -58,11 +59,11 @@ Item {
   readonly property bool revealed: !forceClose && (forceOpen || showPill)
   readonly property bool hasIcon: root.icon !== ""
 
-  // Always prioritize hover color, then the custom one and finally the fallback color
-  readonly property color bgColor: hovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor
-  readonly property color fgColor: hovered ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color iconFgColor: hovered ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color textFgColor: hovered ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  // Pressed and hover states take precedence over custom colors.
+  readonly property color bgColor: pressed ? Color.mHoverPressed : (hovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor)
+  readonly property color fgColor: (pressed || hovered) ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color iconFgColor: (pressed || hovered) ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color textFgColor: (pressed || hovered) ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
 
   readonly property real iconSize: Style.toOdd(pillHeight * 0.48)
 
@@ -107,13 +108,6 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     anchors.horizontalCenter: parent.horizontalCenter
 
-    Behavior on color {
-      enabled: !Color.isTransitioning
-      ColorAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.InOutQuad
-      }
-    }
   }
 
   Rectangle {
@@ -325,6 +319,9 @@ Item {
       }
       TooltipService.hide();
     }
+    onPressed: root.pressed = true
+    onReleased: root.pressed = false
+    onCanceled: root.pressed = false
     onClicked: mouse => {
                  TooltipService.hide();
                  if (mouse.button === Qt.LeftButton) {

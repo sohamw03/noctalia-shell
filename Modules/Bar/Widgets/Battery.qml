@@ -156,17 +156,9 @@ Item {
     width: root.isBarVertical ? root.capsuleHeight : nBattery.width + Style.margin2S
     height: root.isBarVertical ? nBattery.height + Style.margin2S : root.capsuleHeight
     radius: Math.min(Style.radiusL, width / 2)
-    color: graphicMouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+    color: graphicMouseArea.pressed ? Color.mHoverPressed : (graphicMouseArea.containsMouse ? Color.mHover : Style.capsuleColor)
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
-
-    Behavior on color {
-      enabled: !Color.isTransitioning
-      ColorAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.InOutQuad
-      }
-    }
   }
 
   NBattery {

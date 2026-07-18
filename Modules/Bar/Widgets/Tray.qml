@@ -394,6 +394,7 @@ Item {
         height: isVertical ? capsuleHeight : barHeight
         visible: modelData
         readonly property bool isHovered: root.hoveredItemIndex === index
+        readonly property bool isPressed: itemMouseArea.pressed
 
         // Tooltip anchor representing the visual area (for proper tooltip positioning)
         Item {
@@ -447,15 +448,8 @@ Item {
           anchors.horizontalCenter: trayIcon.horizontalCenter
           width: Style.toOdd(iconSize * 0.25)
           height: 4
-          color: trayDelegate.isHovered ? Color.mHover : "transparent"
+          color: trayDelegate.isPressed ? Color.mHoverPressed : (trayDelegate.isHovered ? Color.mHover : "transparent")
           radius: Math.min(Style.radiusXXS, width / 2)
-
-          Behavior on color {
-            ColorAnimation {
-              duration: Style.animationFast
-              easing.type: Easing.OutCubic
-            }
-          }
         }
 
         MouseArea {

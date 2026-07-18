@@ -56,6 +56,10 @@ Item {
   implicitWidth: contentWidth
   implicitHeight: contentHeight
 
+  function hoverForeground(color) {
+    return clockMouseArea.containsMouse ? Color.mOnHover : color;
+  }
+
   // Visual clock capsule - stays at content size, centered in parent
   Rectangle {
     id: visualClock
@@ -64,7 +68,7 @@ Item {
     anchors.centerIn: parent
 
     radius: Style.radiusL
-    color: Style.capsuleColor
+    color: clockMouseArea.pressed ? Color.mHoverPressed : (clockMouseArea.containsMouse ? Color.mHover : Style.capsuleColor)
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
 
@@ -102,7 +106,7 @@ Item {
                 }
               }
               applyUiScale: false
-              color: textColor
+              color: root.hoverForeground(textColor)
               wrapMode: Text.WordWrap
               Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
               features: ({
@@ -129,7 +133,7 @@ Item {
               family: useCustomFont && customFont ? customFont : Settings.data.ui.fontDefault
               pointSize: barFontSize
               applyUiScale: false
-              color: textColor
+              color: root.hoverForeground(textColor)
               wrapMode: Text.WordWrap
               Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
               features: ({

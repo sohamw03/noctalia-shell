@@ -80,6 +80,7 @@ Singleton {
 
   property color mHover: defaultColors.mHover
   property color mOnHover: defaultColors.mOnHover
+  readonly property color mHoverPressed: Qt.lighter(mHover, 1.15)
 
   // --- Color transition animations ---
   Behavior on mPrimary {

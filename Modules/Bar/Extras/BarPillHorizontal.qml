@@ -20,6 +20,7 @@ Item {
   property bool oppositeDirection: false
   property string iconPosition: ""
   property bool hovered: false
+  property bool pressed: false
   property color customBackgroundColor: "transparent"
   property color customTextIconColor: "transparent"
   property color customIconColor: "transparent"
@@ -50,11 +51,11 @@ Item {
   readonly property int pillOverlap: Math.round(pillHeight * 0.5)
   readonly property int pillMaxWidth: Math.max(1, Math.round(textItem.implicitWidth + pillPaddingHorizontal * 2 + pillOverlap))
 
-  // Always prioritize hover color, then the custom one and finally the fallback color
-  readonly property color bgColor: hovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor
-  readonly property color fgColor: hovered ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color iconFgColor: hovered ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color textFgColor: hovered ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  // Pressed and hover states take precedence over custom colors.
+  readonly property color bgColor: pressed ? Color.mHoverPressed : (hovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor)
+  readonly property color fgColor: (pressed || hovered) ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color iconFgColor: (pressed || hovered) ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color textFgColor: (pressed || hovered) ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
 
   readonly property real iconSize: Style.toOdd(pillHeight * 0.48)
 
@@ -94,13 +95,6 @@ Item {
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
 
-    Behavior on color {
-      enabled: !Color.isTransitioning
-      ColorAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.InOutQuad
-      }
-    }
   }
 
   Rectangle {
@@ -301,6 +295,9 @@ Item {
       }
       TooltipService.hide();
     }
+    onPressed: root.pressed = true
+    onReleased: root.pressed = false
+    onCanceled: root.pressed = false
     onClicked: mouse => {
                  TooltipService.hide();
                  if (mouse.button === Qt.LeftButton) {

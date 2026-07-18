@@ -16,11 +16,14 @@ Item {
   property bool allowClickWhenDisabled: false
   property bool handleWheel: false
   property bool hovering: false
+  property bool pressed: false
 
   property color colorBg: Color.smartAlpha(Color.mSurfaceVariant)
   property color colorFg: Color.mPrimary
   property color colorBgHover: Color.mHover
   property color colorFgHover: Color.mOnHover
+  property color colorBgPressed: Color.mHoverPressed
+  property color colorFgPressed: Color.mOnHover
   property color colorBorder: Color.mOutline
   property color colorBorderHover: Color.mOutline
   property real customRadius: -1 // -1 means use default (iRadiusL), otherwise use this value
@@ -54,35 +57,20 @@ Item {
     height: root.buttonSize
     anchors.centerIn: parent
 
-    color: root.enabled && root.hovering ? colorBgHover : colorBg
+    color: root.enabled && root.pressed ? colorBgPressed : (root.enabled && root.hovering ? colorBgHover : colorBg)
     radius: Math.min((customRadius >= 0 ? customRadius : Style.iRadiusL), width / 2)
     border.color: root.enabled && root.hovering ? colorBorderHover : colorBorder
     border.width: Style.borderS
-
-    Behavior on color {
-      enabled: !Color.isTransitioning
-      ColorAnimation {
-        duration: Style.animationFast
-        easing.type: Easing.InOutQuad
-      }
-    }
 
     NIcon {
       icon: root.icon
       pointSize: Style.toOdd(visualButton.width * 0.48)
       applyUiScale: root.applyUiScale
-      color: root.enabled && root.hovering ? colorFgHover : colorFg
+      color: root.enabled && root.pressed ? colorFgPressed : (root.enabled && root.hovering ? colorFgHover : colorFg)
       // Pixel-perfect centering
       x: Style.pixelAlignCenter(visualButton.width, width)
       y: Style.pixelAlignCenter(visualButton.height, contentHeight)
 
-      Behavior on color {
-        enabled: !Color.isTransitioning
-        ColorAnimation {
-          duration: Style.animationFast
-          easing.type: Easing.InOutQuad
-        }
-      }
     }
   }
 
@@ -108,6 +96,11 @@ Item {
       }
       root.exited();
     }
+    onPressed: mouse => {
+                 root.pressed = root.enabled && (mouse.button === Qt.LeftButton);
+               }
+    onReleased: root.pressed = false
+    onCanceled: root.pressed = false
     onClicked: mouse => {
                  if (tooltipText && (!Array.isArray(tooltipText) || tooltipText.length > 0)) {
                    TooltipService.hide(root);

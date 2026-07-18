@@ -685,13 +685,14 @@ Item {
           readonly property bool isFocused: isRunning && modelData.window && modelData.window.isFocused
           readonly property bool isPinnedRunning: isPinned && isRunning && !isFocused
           readonly property bool isHovered: root.hoveredWindowId === modelData.id
+          readonly property bool isPressed: taskbarMouseArea.pressed
 
           readonly property bool shouldShowTitle: root.showTitle && modelData.type !== "pinned"
           readonly property real itemSpacing: Style.marginS
           readonly property real contentWidth: shouldShowTitle ? root.itemSize + itemSpacing + root.titleWidth : root.itemSize
 
           readonly property string title: modelData.title || modelData.appId || "Unknown application"
-          readonly property color titleBgColor: (isHovered || isFocused) ? Color.mHover : Style.capsuleColor
+          readonly property color titleBgColor: isPressed ? Color.mHoverPressed : ((isHovered || isFocused) ? Color.mHover : Style.capsuleColor)
           readonly property color titleFgColor: (isHovered || isFocused) ? Color.mOnHover : Color.mOnSurface
 
           Layout.preferredWidth: root.isVerticalBar ? root.barHeight : (root.showTitle ? Math.round(contentWidth + Style.margin2M) : Math.round(contentWidth)) // Add margins for both pinned and running apps
@@ -825,12 +826,6 @@ Item {
               color: titleBgColor
               radius: Style.radiusM
 
-              Behavior on color {
-                ColorAnimation {
-                  duration: Style.animationFast
-                  easing.type: Easing.InOutQuad
-                }
-              }
             }
 
             Rectangle {
@@ -875,15 +870,8 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: Style.toOdd(root.itemSize * 0.25)
                     height: 4
-                    color: taskbarItem.isFocused ? Color.mPrimary : (taskbarItem.isHovered ? Color.mHover : "transparent")
+                    color: taskbarItem.isPressed ? Color.mHoverPressed : (taskbarItem.isFocused ? Color.mPrimary : (taskbarItem.isHovered ? Color.mHover : "transparent"))
                     radius: Math.min(Style.radiusXXS, width / 2)
-
-                    Behavior on color {
-                      ColorAnimation {
-                        duration: Style.animationFast
-                        easing.type: Easing.OutCubic
-                      }
-                    }
                   }
                 }
 
