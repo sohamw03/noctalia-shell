@@ -51,8 +51,12 @@ Item {
   // Track actual visibility (delayed until content is loaded and sized)
   property bool isPanelVisible: false
 
-  // Track size animation completion for sequential opacity animation
+  // Tracks the short opening transition before the panel reaches its final position.
   property bool sizeAnimationComplete: false
+
+  // Panels start only slightly toward their attachment edge, then settle in place.
+  readonly property real openOffsetRatio: 0.08
+  readonly property int openAnimationDuration: Math.round(Style.animationFast * 0.8)
 
   // Derived state: track opening transition
   readonly property bool isOpening: isPanelVisible && !isClosing && !sizeAnimationComplete
@@ -384,22 +388,23 @@ Item {
     panelBackground.targetWidth = panelWidth;
     panelBackground.targetHeight = panelHeight;
 
-    // Pre-compute bar edge positions with overlap (used multiple times below)
-    // For attached panels, we extend slightly into the bar area to prevent hairline gaps
-    var leftBarEdgeWithOverlap = root.barMarginH + root.barHeight - root.attachmentOverlap;
-    var rightBarEdgeWithOverlap = root.width - root.barMarginH - root.barHeight + root.attachmentOverlap;
-    var topBarEdgeWithOverlap = root.barMarginV + root.barHeight - root.attachmentOverlap;
-    var bottomBarEdgeWithOverlap = root.height - root.barMarginV - root.barHeight + root.attachmentOverlap;
+    // Keep panels near the bar that opened them, but leave a small visual gap
+    // so their regular rounded corners do not visually merge into the bar.
+    var panelBarGap = Style.marginS;
+    var leftBarEdgeWithOverlap = root.barMarginH + root.barHeight + panelBarGap;
+    var rightBarEdgeWithOverlap = root.width - root.barMarginH - root.barHeight - panelBarGap;
+    var topBarEdgeWithOverlap = root.barMarginV + root.barHeight + panelBarGap;
+    var bottomBarEdgeWithOverlap = root.height - root.barMarginV - root.barHeight - panelBarGap;
 
     if (root.isFramed) {
       if (root.barPosition === "left")
-        leftBarEdgeWithOverlap = root.barHeight - root.attachmentOverlap;
+        leftBarEdgeWithOverlap = root.barHeight + panelBarGap;
       if (root.barPosition === "right")
-        rightBarEdgeWithOverlap = root.width - root.barHeight + root.attachmentOverlap;
+        rightBarEdgeWithOverlap = root.width - root.barHeight - panelBarGap;
       if (root.barPosition === "top")
-        topBarEdgeWithOverlap = root.barHeight - root.attachmentOverlap;
+        topBarEdgeWithOverlap = root.barHeight + panelBarGap;
       if (root.barPosition === "bottom")
-        bottomBarEdgeWithOverlap = root.height - root.barHeight + root.attachmentOverlap;
+        bottomBarEdgeWithOverlap = root.height - root.barHeight - panelBarGap;
     }
 
     // Calculate position
@@ -694,8 +699,8 @@ Item {
   }
 
   // Opacity animation
-  // Opening: fade in after size animation reaches 75%
-  // Closing: fade out immediately
+  // Opening: fade and settle into the final position together.
+  // Closing: fade out immediately.
   opacity: {
     if (isClosing)
       return 0.0; // Fade out when closing
@@ -708,7 +713,7 @@ Item {
     enabled: !PanelService.closedImmediately
     NumberAnimation {
       id: opacityAnimation
-      duration: root.isClosing ? Style.animationFaster : Style.animationFast
+      duration: root.isClosing ? Style.animationFaster : root.openAnimationDuration
       easing.type: Easing.OutQuad
 
       onRunningChanged: {
@@ -750,10 +755,11 @@ Item {
     }
   }
 
-  // Timer to trigger opacity fade at 50% of size animation
+  // Defer completion one event-loop turn so the full-size panel can animate from
+  // its small positional offset instead of growing from the bar.
   Timer {
     id: opacityTrigger
-    interval: Style.animationNormal * 0.5
+    interval: 0
     repeat: false
     onTriggered: {
       if (root.isPanelVisible) {
@@ -1045,55 +1051,55 @@ Item {
         return false;
       }
 
-      // Determine animation axis based on which edge is closest
-      // Priority: horizontal edges (top/bottom) take precedence over vertical edges (left/right)
-      // This prevents diagonal animations when panel is attached to a corner
-      // Use reactive values here - they're evaluated BEFORE isPanelVisible becomes true
-      readonly property bool shouldAnimateWidth: !shouldAnimateHeight && (animateFromLeft || animateFromRight)
-      readonly property bool shouldAnimateHeight: animateFromTop || animateFromBottom
+      // Panels keep their full dimensions while opening and closing. The former
+      // edge-growing animation made them appear to sweep out of the bar.
+      readonly property bool shouldAnimateWidth: false
+      readonly property bool shouldAnimateHeight: false
 
       // Current animated width/height (referenced by x/y for right/bottom positioning)
       readonly property real currentWidth: {
-        if (isClosing && opacityFadeComplete && shouldAnimateWidth)
-          return 0;
-        if (isClosing || isPanelVisible)
-          return targetWidth;
-        // If not animating width, start at target (no visual change)
-        // If animating width, start at 0 (will animate to target)
-        return shouldAnimateWidth ? 0 : targetWidth;
+        return targetWidth;
       }
       readonly property real currentHeight: {
-        if (isClosing && opacityFadeComplete && shouldAnimateHeight)
-          return 0;
-        if (isClosing || isPanelVisible)
-          return targetHeight;
-        // If not animating height, start at target (no visual change)
-        // If animating height, start at 0 (will animate to target)
-        return shouldAnimateHeight ? 0 : targetHeight;
+        return targetHeight;
       }
 
       width: currentWidth
       height: currentHeight
 
       x: {
-        // Offset x to make panel grow/shrink from the appropriate edge
-        // Use CACHED values to prevent recalculation during animation
-        if (root.cachedAnimateFromRight && root.cachedShouldAnimateWidth) {
-          // Keep the RIGHT edge fixed at its target position
-          var targetRightEdge = targetX + targetWidth;
-          return targetRightEdge - width;
+        if (root.isOpening) {
+          if (root.cachedAnimateFromLeft)
+            return targetX - width * root.openOffsetRatio;
+          if (root.cachedAnimateFromRight)
+            return targetX + width * root.openOffsetRatio;
         }
         return targetX;
       }
       y: {
-        // Offset y to make panel grow/shrink from the appropriate edge
-        // Use CACHED values to prevent recalculation during animation
-        if (root.cachedAnimateFromBottom && root.cachedShouldAnimateHeight) {
-          // Keep the BOTTOM edge fixed at its target position
-          var targetBottomEdge = targetY + targetHeight;
-          return targetBottomEdge - height;
+        if (root.isOpening) {
+          if (root.cachedAnimateFromTop)
+            return targetY - height * root.openOffsetRatio;
+          if (root.cachedAnimateFromBottom)
+            return targetY + height * root.openOffsetRatio;
         }
         return targetY;
+      }
+
+      Behavior on x {
+        enabled: !PanelService.closedImmediately && root.isPanelVisible && !root.isClosing
+        NumberAnimation {
+          duration: root.openAnimationDuration
+          easing.type: Easing.OutQuad
+        }
+      }
+
+      Behavior on y {
+        enabled: !PanelService.closedImmediately && root.isPanelVisible && !root.isClosing
+        NumberAnimation {
+          duration: root.openAnimationDuration
+          easing.type: Easing.OutQuad
+        }
       }
 
       Behavior on width {
@@ -1156,144 +1162,12 @@ Item {
         }
       }
 
-      // Corner states for PanelBackground to read
-      // State -1: No radius (flat/square corner)
-      // State 0: Normal (inner curve)
-      // State 1: Horizontal inversion (outer curve on X-axis)
-      // State 2: Vertical inversion (outer curve on Y-axis)
-
-      // Smart corner state calculation based on bar attachment and edge touching
-      property int topLeftCornerState: {
-        // If bar is not visible, don't show outer corners based on bar attachment
-        if (!root.barShouldShow) {
-          // Only check edge touching, not bar touching
-          var edgeInverted = panelContent.allowAttach && (panelContent.touchingLeftEdge || panelContent.touchingTopEdge);
-          if (edgeInverted) {
-            if (panelContent.touchingLeftEdge && panelContent.touchingTopEdge)
-              return 0; // Both edges: no inversion (normal rounded corner)
-            if (panelContent.touchingLeftEdge)
-              return 2; // Left edge: vertical inversion
-            if (panelContent.touchingTopEdge)
-              return 1; // Top edge: horizontal inversion
-          }
-          return 0;
-        }
-
-        var barTouchInverted = panelContent.touchingTopBar || panelContent.touchingLeftBar;
-        // Invert if touching either edge that forms this corner (left OR top), regardless of bar position
-        var edgeInverted = panelContent.allowAttach && (panelContent.touchingLeftEdge || panelContent.touchingTopEdge);
-
-        if (barTouchInverted || edgeInverted) {
-          // Determine inversion direction based on which edge is touched
-          if (panelContent.touchingLeftEdge && panelContent.touchingTopEdge)
-            return 0; // Both edges: no inversion (normal rounded corner)
-          if (panelContent.touchingLeftEdge)
-            return 2; // Left edge: vertical inversion
-          if (panelContent.touchingTopEdge)
-            return 1; // Top edge: horizontal inversion
-          return root.barIsVertical ? 2 : 1;
-        }
-        return 0;
-      }
-
-      property int topRightCornerState: {
-        // If bar is not visible, don't show outer corners based on bar attachment
-        if (!root.barShouldShow) {
-          // Only check edge touching, not bar touching
-          var edgeInverted = panelContent.allowAttach && (panelContent.touchingRightEdge || panelContent.touchingTopEdge);
-          if (edgeInverted) {
-            if (panelContent.touchingRightEdge && panelContent.touchingTopEdge)
-              return 0; // Both edges: no inversion (normal rounded corner)
-            if (panelContent.touchingRightEdge)
-              return 2; // Right edge: vertical inversion
-            if (panelContent.touchingTopEdge)
-              return 1; // Top edge: horizontal inversion
-          }
-          return 0;
-        }
-
-        var barTouchInverted = panelContent.touchingTopBar || panelContent.touchingRightBar;
-        // Invert if touching either edge that forms this corner (right OR top), regardless of bar position
-        var edgeInverted = panelContent.allowAttach && (panelContent.touchingRightEdge || panelContent.touchingTopEdge);
-
-        if (barTouchInverted || edgeInverted) {
-          // Determine inversion direction based on which edge is touched
-          if (panelContent.touchingRightEdge && panelContent.touchingTopEdge)
-            return 0; // Both edges: no inversion (normal rounded corner)
-          if (panelContent.touchingRightEdge)
-            return 2; // Right edge: vertical inversion
-          if (panelContent.touchingTopEdge)
-            return 1; // Top edge: horizontal inversion
-          return root.barIsVertical ? 2 : 1;
-        }
-        return 0;
-      }
-
-      property int bottomLeftCornerState: {
-        // If bar is not visible, don't show outer corners based on bar attachment
-        if (!root.barShouldShow) {
-          // Only check edge touching, not bar touching
-          var edgeInverted = panelContent.allowAttach && (panelContent.touchingLeftEdge || panelContent.touchingBottomEdge);
-          if (edgeInverted) {
-            if (panelContent.touchingLeftEdge && panelContent.touchingBottomEdge)
-              return 0; // Both edges: no inversion (normal rounded corner)
-            if (panelContent.touchingLeftEdge)
-              return 2; // Left edge: vertical inversion
-            if (panelContent.touchingBottomEdge)
-              return 1; // Bottom edge: horizontal inversion
-          }
-          return 0;
-        }
-
-        var barTouchInverted = panelContent.touchingBottomBar || panelContent.touchingLeftBar;
-        // Invert if touching either edge that forms this corner (left OR bottom), regardless of bar position
-        var edgeInverted = panelContent.allowAttach && (panelContent.touchingLeftEdge || panelContent.touchingBottomEdge);
-
-        if (barTouchInverted || edgeInverted) {
-          // Determine inversion direction based on which edge is touched
-          if (panelContent.touchingLeftEdge && panelContent.touchingBottomEdge)
-            return 0; // Both edges: no inversion (normal rounded corner)
-          if (panelContent.touchingLeftEdge)
-            return 2; // Left edge: vertical inversion
-          if (panelContent.touchingBottomEdge)
-            return 1; // Bottom edge: horizontal inversion
-          return root.barIsVertical ? 2 : 1;
-        }
-        return 0;
-      }
-
-      property int bottomRightCornerState: {
-        // If bar is not visible, don't show outer corners based on bar attachment
-        if (!root.barShouldShow) {
-          // Only check edge touching, not bar touching
-          var edgeInverted = panelContent.allowAttach && (panelContent.touchingRightEdge || panelContent.touchingBottomEdge);
-          if (edgeInverted) {
-            if (panelContent.touchingRightEdge && panelContent.touchingBottomEdge)
-              return 0; // Both edges: no inversion (normal rounded corner)
-            if (panelContent.touchingRightEdge)
-              return 2; // Right edge: vertical inversion
-            if (panelContent.touchingBottomEdge)
-              return 1; // Bottom edge: horizontal inversion
-          }
-          return 0;
-        }
-
-        var barTouchInverted = panelContent.touchingBottomBar || panelContent.touchingRightBar;
-        // Invert if touching either edge that forms this corner (right OR bottom), regardless of bar position
-        var edgeInverted = panelContent.allowAttach && (panelContent.touchingRightEdge || panelContent.touchingBottomEdge);
-
-        if (barTouchInverted || edgeInverted) {
-          // Determine inversion direction based on which edge is touched
-          if (panelContent.touchingRightEdge && panelContent.touchingBottomEdge)
-            return 0; // Both edges: no inversion (normal rounded corner)
-          if (panelContent.touchingRightEdge)
-            return 2; // Right edge: vertical inversion
-          if (panelContent.touchingBottomEdge)
-            return 1; // Bottom edge: horizontal inversion
-          return root.barIsVertical ? 2 : 1;
-        }
-        return 0;
-      }
+      // Keep all panel corners normally rounded, including when a panel is
+      // positioned next to the bar or a screen edge.
+      property int topLeftCornerState: 0
+      property int topRightCornerState: 0
+      property int bottomLeftCornerState: 0
+      property int bottomRightCornerState: 0
 
       // MouseArea to catch clicks on the panel and prevent them from reaching the background
       // This prevents closing the panel when clicking inside it

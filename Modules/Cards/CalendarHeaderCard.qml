@@ -13,7 +13,8 @@ Rectangle {
   Layout.minimumHeight: (60 * Style.uiScaleRatio) + Style.margin2M
   Layout.preferredHeight: (60 * Style.uiScaleRatio) + Style.margin2M
   implicitHeight: (60 * Style.uiScaleRatio) + Style.margin2M
-  radius: Style.radiusL
+  // This sits at the standard panel inset, so use the matching inner radius.
+  radius: Style.concentricRadius(Style.radiusL, Style.marginL)
   color: Color.mPrimary
 
   // Internal state

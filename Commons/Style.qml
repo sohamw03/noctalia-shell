@@ -25,11 +25,17 @@ Singleton {
 
   // Container Radii: major layout sections (sidebars, cards, content panels)
   readonly property int radiusXXXS: Math.round(3 * Settings.data.general.radiusRatio)
-  readonly property int radiusXXS: Math.round(4 * Settings.data.general.radiusRatio)
-  readonly property int radiusXS: Math.round(8 * Settings.data.general.radiusRatio)
-  readonly property int radiusS: Math.round(12 * Settings.data.general.radiusRatio)
-  readonly property int radiusM: Math.round(16 * Settings.data.general.radiusRatio)
-  readonly property int radiusL: Math.round(20 * Settings.data.general.radiusRatio)
+  readonly property int radiusXXS: Math.round(5 * Settings.data.general.radiusRatio)
+  readonly property int radiusXS: Math.round(9 * Settings.data.general.radiusRatio)
+  readonly property int radiusS: Math.round(13 * Settings.data.general.radiusRatio)
+  readonly property int radiusM: Math.round(18 * Settings.data.general.radiusRatio)
+  readonly property int radiusL: Math.round(22 * Settings.data.general.radiusRatio)
+
+  // For a rounded surface inset inside another rounded surface, subtract the
+  // inset from the outer radius so both curves share the same center.
+  function concentricRadius(outerRadius, inset) {
+    return Math.max(0, outerRadius - inset);
+  }
 
   // Input radii: interactive elements (buttons, toggles, text fields)
   readonly property int iRadiusXXXS: Math.round(3 * Settings.data.general.iRadiusRatio)

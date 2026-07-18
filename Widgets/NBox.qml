@@ -16,7 +16,9 @@ Item {
   Rectangle {
     id: bg
     anchors.fill: parent
-    radius: Style.radiusM
+    // NBox is normally the first surface inset by marginL inside a panel.
+    // Matching its curve center to the panel creates genuinely concentric corners.
+    radius: Style.concentricRadius(Style.radiusL, Style.marginL)
     border.color: Style.boxBorderColor
     border.width: Style.borderS
     color: {
