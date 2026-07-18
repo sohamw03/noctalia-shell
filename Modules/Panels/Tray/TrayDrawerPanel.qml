@@ -21,9 +21,11 @@ SmartPanel {
 
   // Sizing properties must stay at root for preferredWidth/Height
   readonly property int maxColumns: 8
-  readonly property real cellSize: Math.round(Style.capsuleHeight * 0.65)
-  readonly property real outerPadding: Style.marginM
-  readonly property real innerSpacing: Style.marginM
+  readonly property real cellSize: Math.round(Style.capsuleHeight * 1.1)
+  readonly property real iconSize: Style.toOdd(cellSize * 0.45)
+  readonly property real iconInset: (cellSize - iconSize) / 2
+  readonly property real outerPadding: Style.marginXXS
+  readonly property real innerSpacing: Style.marginXXS
 
   // All tray items from SystemTray
   readonly property var trayValuesAll: (SystemTray.items && SystemTray.items.values) ? SystemTray.items.values : []
@@ -184,9 +186,16 @@ SmartPanel {
           width: root.cellSize
           height: root.cellSize
 
+          Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: trayMouseArea.pressed ? Color.mHoverPressed : trayMouseArea.containsMouse ? Color.mHover : "transparent"
+          }
+
           IconImage {
             id: trayIcon
             anchors.fill: parent
+            anchors.margins: root.iconInset
             asynchronous: true
             backer.fillMode: Image.PreserveAspectFit
             source: {
@@ -209,9 +218,11 @@ SmartPanel {
               property real colorizeMode: 1.0
               fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
             }
+          }
 
-            MouseArea {
-              anchors.fill: parent
+          MouseArea {
+            id: trayMouseArea
+            anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
               hoverEnabled: true
               acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -279,8 +290,7 @@ SmartPanel {
                 }
                 TooltipService.show(trayIcon, modelData.tooltipTitle || modelData.name || modelData.id || "Tray Item", BarService.getTooltipDirection(root.screen?.name));
               }
-              onExited: TooltipService.hide()
-            }
+            onExited: TooltipService.hide()
           }
         }
       }

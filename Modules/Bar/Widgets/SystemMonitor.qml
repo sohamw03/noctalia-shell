@@ -90,8 +90,8 @@ Item {
     Quickshell.execDetached(["sh", "-c", Settings.data.systemMonitor.externalMonitor]);
   }
 
-  function hoverForeground(color) {
-    return (tooltipArea.containsMouse || hoverHold) ? Color.mOnHover : color;
+  function hoverForeground(color, preserveStatusColor = false) {
+    return preserveStatusColor || !(tooltipArea.containsMouse || hoverHold) ? color : Color.mOnHover;
   }
 
   // Build comprehensive tooltip text with all stats
@@ -259,7 +259,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((cpuWarning || cpuCritical) ? SystemStatService.cpuColor : root.iconColor)
+              color: root.hoverForeground((cpuWarning || cpuCritical) ? SystemStatService.cpuColor : root.iconColor, cpuWarning || cpuCritical)
             }
           }
 
@@ -273,7 +273,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((cpuWarning || cpuCritical) ? SystemStatService.cpuColor : root.textColor)
+            color: root.hoverForeground((cpuWarning || cpuCritical) ? SystemStatService.cpuColor : root.textColor, cpuWarning || cpuCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }
@@ -408,7 +408,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((tempWarning || tempCritical) ? SystemStatService.tempColor : root.iconColor)
+              color: root.hoverForeground((tempWarning || tempCritical) ? SystemStatService.tempColor : root.iconColor, tempWarning || tempCritical)
             }
           }
 
@@ -422,7 +422,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((tempWarning || tempCritical) ? SystemStatService.tempColor : root.textColor)
+            color: root.hoverForeground((tempWarning || tempCritical) ? SystemStatService.tempColor : root.textColor, tempWarning || tempCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }
@@ -476,7 +476,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((gpuWarning || gpuCritical) ? SystemStatService.gpuColor : root.iconColor)
+              color: root.hoverForeground((gpuWarning || gpuCritical) ? SystemStatService.gpuColor : root.iconColor, gpuWarning || gpuCritical)
             }
           }
 
@@ -490,7 +490,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((gpuWarning || gpuCritical) ? SystemStatService.gpuColor : root.textColor)
+            color: root.hoverForeground((gpuWarning || gpuCritical) ? SystemStatService.gpuColor : root.textColor, gpuWarning || gpuCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }
@@ -611,7 +611,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((memWarning || memCritical) ? SystemStatService.memColor : root.iconColor)
+              color: root.hoverForeground((memWarning || memCritical) ? SystemStatService.memColor : root.iconColor, memWarning || memCritical)
             }
           }
 
@@ -628,7 +628,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((memWarning || memCritical) ? SystemStatService.memColor : root.textColor)
+            color: root.hoverForeground((memWarning || memCritical) ? SystemStatService.memColor : root.textColor, memWarning || memCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }
@@ -682,7 +682,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((swapWarning || swapCritical) ? SystemStatService.swapColor : root.iconColor)
+              color: root.hoverForeground((swapWarning || swapCritical) ? SystemStatService.swapColor : root.iconColor, swapWarning || swapCritical)
             }
           }
 
@@ -700,7 +700,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((swapWarning || swapCritical) ? SystemStatService.swapColor : root.textColor)
+            color: root.hoverForeground((swapWarning || swapCritical) ? SystemStatService.swapColor : root.textColor, swapWarning || swapCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }
@@ -886,7 +886,7 @@ Item {
               applyUiScale: false
               x: Style.pixelAlignCenter(parent.width, width)
               y: Style.pixelAlignCenter(parent.height, contentHeight)
-              color: root.hoverForeground((diskWarning || diskCritical) ? SystemStatService.getDiskColor(diskPath) : root.iconColor)
+              color: root.hoverForeground((diskWarning || diskCritical) ? SystemStatService.getDiskColor(diskPath) : root.iconColor, diskWarning || diskCritical)
             }
           }
 
@@ -904,7 +904,7 @@ Item {
             Layout.alignment: Qt.AlignCenter
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            color: root.hoverForeground((diskWarning || diskCritical) ? SystemStatService.getDiskColor(diskPath) : root.textColor)
+            color: root.hoverForeground((diskWarning || diskCritical) ? SystemStatService.getDiskColor(diskPath) : root.textColor, diskWarning || diskCritical)
             Layout.row: isVertical ? 0 : 0
             Layout.column: isVertical ? 0 : 1
           }

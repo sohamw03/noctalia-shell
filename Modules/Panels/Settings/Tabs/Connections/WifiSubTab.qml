@@ -182,22 +182,22 @@ Item {
       visible: root.connectedNetworks.length > 0 && NetworkService.wifiEnabled
       Layout.fillWidth: true
       Layout.preferredHeight: connectedCol.implicitHeight + Style.margin2M
-      border.color: showOnlyLists ? Style.boxBorderColor : "transparent"
-      color: showOnlyLists ? Color.mSurfaceVariant : "transparent"
+      border.color: "transparent"
+      color: "transparent"
 
       ColumnLayout {
         id: connectedCol
         anchors.fill: parent
         anchors.topMargin: Style.marginM
         anchors.bottomMargin: Style.marginM
-        anchors.leftMargin: showOnlyLists ? Style.marginL : 0
-        anchors.rightMargin: showOnlyLists ? Style.marginL : 0
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
         spacing: Style.marginM
 
         NLabel {
           label: I18n.tr("common.connected")
           Layout.fillWidth: true
-          Layout.leftMargin: Style.marginS
+          Layout.leftMargin: 0
         }
 
         Repeater {
@@ -213,22 +213,22 @@ Item {
       visible: root.savedNetworks.length > 0 && NetworkService.wifiEnabled
       Layout.fillWidth: true
       Layout.preferredHeight: savedCol.implicitHeight + Style.margin2M
-      border.color: showOnlyLists ? Style.boxBorderColor : "transparent"
-      color: showOnlyLists ? Color.mSurfaceVariant : "transparent"
+      border.color: "transparent"
+      color: "transparent"
 
       ColumnLayout {
         id: savedCol
         anchors.fill: parent
         anchors.topMargin: Style.marginM
         anchors.bottomMargin: Style.marginM
-        anchors.leftMargin: showOnlyLists ? Style.marginL : 0
-        anchors.rightMargin: showOnlyLists ? Style.marginL : 0
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
         spacing: Style.marginM
 
         NLabel {
           label: I18n.tr("wifi.panel.known-networks")
           Layout.fillWidth: true
-          Layout.leftMargin: Style.marginS
+          Layout.leftMargin: 0
         }
 
         Repeater {
@@ -244,21 +244,21 @@ Item {
       visible: root.availableNetworks.length > 0 && NetworkService.wifiEnabled
       Layout.fillWidth: true
       Layout.preferredHeight: availableCol.implicitHeight + Style.margin2M
-      border.color: showOnlyLists ? Style.boxBorderColor : "transparent"
-      color: showOnlyLists ? Color.mSurfaceVariant : "transparent"
+      border.color: "transparent"
+      color: "transparent"
 
       ColumnLayout {
         id: availableCol
         anchors.fill: parent
         anchors.topMargin: Style.marginM
         anchors.bottomMargin: Style.marginM
-        anchors.leftMargin: showOnlyLists ? Style.marginL : 0
-        anchors.rightMargin: showOnlyLists ? Style.marginL : 0
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
         spacing: Style.marginM
 
         RowLayout {
           Layout.fillWidth: true
-          Layout.leftMargin: Style.marginS
+          Layout.leftMargin: 0
           spacing: Style.marginS
 
           NLabel {
@@ -657,7 +657,6 @@ Item {
 
       Layout.fillWidth: true
       Layout.preferredHeight: deviceColumn.implicitHeight + (Style.marginXL)
-      radius: Style.radiusM
       clip: true
       forceOpaque: true
       color: networkItem.getContentColors()[0]
@@ -863,7 +862,7 @@ Item {
           visible: networkItem.isExpanded
           Layout.fillWidth: true
           implicitHeight: infoColumn.implicitHeight + Style.margin2S
-          radius: Style.radiusXS
+          radius: Style.concentricRadius(networkItem.radius, Style.marginS)
           color: Color.mSurfaceVariant
           border.width: Style.borderS
           border.color: Style.boxBorderColor
@@ -1387,7 +1386,7 @@ Item {
           Layout.fillWidth: true
           height: forgetRow.implicitHeight + Style.margin2S
           color: Color.mSurfaceVariant
-          radius: Style.radiusS
+          radius: Style.concentricRadius(networkItem.radius, Style.marginS)
           border.width: Style.borderS
           border.color: Color.mOutline
 

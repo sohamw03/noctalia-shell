@@ -15,7 +15,7 @@ SmartPanel {
   id: root
 
   preferredWidth: Math.round(440 * Style.uiScaleRatio)
-  preferredHeight: Math.round(500 * Style.uiScaleRatio)
+  preferredHeight: Math.round(600 * Style.uiScaleRatio)
 
   // Info panel collapsed by default, view mode persisted in settings
   // Ethernet details UI state (mirrors Wi‑Fi info behavior)
@@ -97,11 +97,14 @@ SmartPanel {
       NBox {
         Layout.fillWidth: true
         Layout.preferredHeight: header.implicitHeight + Style.margin2M
+        color: "transparent"
+        border.color: "transparent"
 
         ColumnLayout {
           id: header
           anchors.fill: parent
-          anchors.margins: Style.marginM
+          anchors.topMargin: Style.marginM
+          anchors.bottomMargin: Style.marginM
           spacing: Style.marginM
 
           RowLayout {
@@ -168,11 +171,12 @@ SmartPanel {
           NTabBar {
             id: modeTabBar
             visible: NetworkService.ethernetAvailable && NetworkService.wifiAvailable
-            margins: Style.marginS
+            margins: 0
             Layout.fillWidth: true
             spacing: Style.marginM
             distributeEvenly: true
             currentIndex: root.panelViewMode === "wifi" ? 0 : 1
+            color: "transparent"
             onCurrentIndexChanged: {
               root.panelViewMode = (currentIndex === 0) ? "wifi" : "ethernet";
             }
@@ -244,6 +248,7 @@ SmartPanel {
           Layout.fillHeight: true
           horizontalPolicy: ScrollBar.AlwaysOff
           verticalPolicy: ScrollBar.AsNeeded
+          showScrollbarWhenScrollable: true
           reserveScrollbarSpace: false
           gradientColor: Color.mSurface
 
@@ -459,7 +464,6 @@ SmartPanel {
                       Layout.leftMargin: Style.marginXS
                       Layout.rightMargin: Style.marginXS
                       implicitHeight: ethItemColumn.implicitHeight + Style.margin2M
-                      radius: Style.radiusM
                       forceOpaque: true
                       color: ethItem.getContentColors()[0]
 
@@ -618,7 +622,7 @@ SmartPanel {
                           visible: ethernetInfoExpanded && NetworkService.activeEthernetIf === modelData.ifname
                           Layout.fillWidth: true
                           color: Color.mSurfaceVariant
-                          radius: Style.radiusXS
+                          radius: Style.concentricRadius(ethItem.radius, Style.marginS)
                           border.width: Style.borderS
                           border.color: Style.boxBorderColor
                           implicitHeight: ethInfoGrid.implicitHeight + Style.margin2S
