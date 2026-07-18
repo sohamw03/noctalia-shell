@@ -14,6 +14,7 @@ Item {
   id: root
 
   property ShellScreen screen
+  property bool hoverHold: false
 
   // Widget properties passed from Bar.qml for per-instance settings
   property string widgetId: ""
@@ -156,7 +157,7 @@ Item {
     width: root.isBarVertical ? root.capsuleHeight : nBattery.width + Style.margin2S
     height: root.isBarVertical ? nBattery.height + Style.margin2S : root.capsuleHeight
     radius: Math.min(Style.radiusL, width / 2)
-    color: graphicMouseArea.pressed ? Color.mHoverPressed : (graphicMouseArea.containsMouse ? Color.mHover : Style.capsuleColor)
+    color: graphicMouseArea.pressed ? Color.mHoverPressed : ((graphicMouseArea.containsMouse || root.hoverHold) ? Color.mHover : Style.capsuleColor)
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
   }
@@ -186,6 +187,8 @@ Item {
     acceptedButtons: Qt.LeftButton | Qt.RightButton
     cursorShape: Qt.PointingHandCursor
     onEntered: {
+      hoverHoldTimer.stop();
+      root.hoverHold = false;
       if (!getBatteryPanel()?.isPanelOpen && root.tooltipContent) {
         TooltipService.show(root, root.tooltipContent, BarService.getTooltipDirection(root.screen?.name));
         tooltipRefreshTimer.start();
@@ -196,13 +199,21 @@ Item {
       TooltipService.hide();
     }
     onClicked: mouse => {
+                 root.hoverHold = true;
+                 hoverHoldTimer.restart();
                  TooltipService.hide();
                  if (mouse.button === Qt.RightButton) {
                    PanelService.showContextMenu(contextMenu, nBattery, screen);
                  } else {
                    toggleBatteryPanel();
                  }
-               }
+    }
+  }
+
+  Timer {
+    id: hoverHoldTimer
+    interval: Style.animationNormal + 50
+    onTriggered: root.hoverHold = false
   }
 
   Timer {

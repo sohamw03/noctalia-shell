@@ -17,6 +17,7 @@ Item {
   property bool handleWheel: false
   property bool hovering: false
   property bool pressed: false
+  property bool hoverHold: false
 
   property color colorBg: Color.smartAlpha(Color.mSurfaceVariant)
   property color colorFg: Color.mPrimary
@@ -48,6 +49,8 @@ Item {
   implicitWidth: buttonSize
   implicitHeight: buttonSize
 
+  readonly property bool visuallyHovered: hovering || hoverHold
+
   opacity: enabled ? 1.0 : 0.6
 
   // Visual button - stays at buttonSize, centered in parent
@@ -57,21 +60,27 @@ Item {
     height: root.buttonSize
     anchors.centerIn: parent
 
-    color: root.enabled && root.pressed ? colorBgPressed : (root.enabled && root.hovering ? colorBgHover : colorBg)
+    color: root.enabled && root.pressed ? colorBgPressed : (root.enabled && root.visuallyHovered ? colorBgHover : colorBg)
     radius: Math.min((customRadius >= 0 ? customRadius : Style.iRadiusL), width / 2)
-    border.color: root.enabled && root.hovering ? colorBorderHover : colorBorder
+    border.color: root.enabled && root.visuallyHovered ? colorBorderHover : colorBorder
     border.width: Style.borderS
 
     NIcon {
       icon: root.icon
       pointSize: Style.toOdd(visualButton.width * 0.48)
       applyUiScale: root.applyUiScale
-      color: root.enabled && root.pressed ? colorFgPressed : (root.enabled && root.hovering ? colorFgHover : colorFg)
+      color: root.enabled && root.pressed ? colorFgPressed : (root.enabled && root.visuallyHovered ? colorFgHover : colorFg)
       // Pixel-perfect centering
       x: Style.pixelAlignCenter(visualButton.width, width)
       y: Style.pixelAlignCenter(visualButton.height, contentHeight)
 
     }
+  }
+
+  Timer {
+    id: hoverHoldTimer
+    interval: Style.animationNormal + 50
+    onTriggered: root.hoverHold = false
   }
 
   // MouseArea fills root (extends beyond visual button for bar click area)
@@ -83,6 +92,8 @@ Item {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     hoverEnabled: true
     onEntered: {
+      hoverHoldTimer.stop();
+      hoverHold = false;
       hovering = root.enabled ? true : false;
       if (hovering && tooltipText && (!Array.isArray(tooltipText) || tooltipText.length > 0)) {
         TooltipService.show(root, tooltipText, tooltipDirection);
@@ -102,6 +113,8 @@ Item {
     onReleased: root.pressed = false
     onCanceled: root.pressed = false
     onClicked: mouse => {
+                 hoverHold = true;
+                 hoverHoldTimer.restart();
                  if (tooltipText && (!Array.isArray(tooltipText) || tooltipText.length > 0)) {
                    TooltipService.hide(root);
                  }

@@ -14,6 +14,7 @@ Item {
   id: root
 
   property ShellScreen screen
+  property bool hoverHold: false
 
   // Widget properties passed from Bar.qml for per-instance settings
   property string widgetId: ""
@@ -90,7 +91,7 @@ Item {
   }
 
   function hoverForeground(color) {
-    return tooltipArea.containsMouse ? Color.mOnHover : color;
+    return (tooltipArea.containsMouse || hoverHold) ? Color.mOnHover : color;
   }
 
   // Build comprehensive tooltip text with all stats
@@ -198,7 +199,7 @@ Item {
     height: root.contentHeight
     anchors.centerIn: parent
     radius: Style.radiusM
-    color: tooltipArea.pressed ? Color.mHoverPressed : (tooltipArea.containsMouse ? Color.mHover : Style.capsuleColor)
+    color: tooltipArea.pressed ? Color.mHoverPressed : ((tooltipArea.containsMouse || root.hoverHold) ? Color.mHover : Style.capsuleColor)
     border.color: Style.capsuleBorderColor
     border.width: Style.capsuleBorderWidth
 
@@ -935,6 +936,8 @@ Item {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     hoverEnabled: true
     onClicked: mouse => {
+                 root.hoverHold = true;
+                 hoverHoldTimer.restart();
                  if (mouse.button === Qt.LeftButton) {
                    PanelService.getPanel("systemStatsPanel", screen)?.toggle(root);
                    TooltipService.hide();
@@ -945,8 +948,10 @@ Item {
                    TooltipService.hide();
                    openExternalMonitor();
                  }
-               }
+    }
     onEntered: {
+      hoverHoldTimer.stop();
+      root.hoverHold = false;
       if (!PanelService.getPanel("systemStatsPanel", screen).isPanelOpen) {
         TooltipService.show(root, buildTooltipContent(), BarService.getTooltipDirection(root.screen?.name));
         tooltipRefreshTimer.start();
@@ -956,6 +961,12 @@ Item {
       tooltipRefreshTimer.stop();
       TooltipService.hide();
     }
+  }
+
+  Timer {
+    id: hoverHoldTimer
+    interval: Style.animationNormal + 50
+    onTriggered: root.hoverHold = false
   }
 
   Timer {

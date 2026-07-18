@@ -21,6 +21,7 @@ Item {
   property string iconPosition: ""
   property bool hovered: false
   property bool pressed: false
+  property bool hoverHold: false
   property bool rotateText: false
   property color customBackgroundColor: "transparent"
   property color customTextIconColor: "transparent"
@@ -60,10 +61,11 @@ Item {
   readonly property bool hasIcon: root.icon !== ""
 
   // Pressed and hover states take precedence over custom colors.
-  readonly property color bgColor: pressed ? Color.mHoverPressed : (hovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor)
-  readonly property color fgColor: (pressed || hovered) ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color iconFgColor: (pressed || hovered) ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
-  readonly property color textFgColor: (pressed || hovered) ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property bool visuallyHovered: hovered || hoverHold
+  readonly property color bgColor: pressed ? Color.mHoverPressed : (visuallyHovered ? Color.mHover : (customBackgroundColor.a > 0) ? customBackgroundColor : Style.capsuleColor)
+  readonly property color fgColor: (pressed || visuallyHovered) ? Color.mOnHover : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color iconFgColor: (pressed || visuallyHovered) ? Color.mOnHover : (customIconColor.a > 0) ? customIconColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
+  readonly property color textFgColor: (pressed || visuallyHovered) ? Color.mOnHover : (customTextColor.a > 0) ? customTextColor : (customTextIconColor.a > 0) ? customTextIconColor : Color.mOnSurface
 
   readonly property real iconSize: Style.toOdd(pillHeight * 0.48)
 
@@ -295,12 +297,20 @@ Item {
     }
   }
 
+  Timer {
+    id: hoverHoldTimer
+    interval: Style.animationNormal + 50
+    onTriggered: root.hoverHold = false
+  }
+
   MouseArea {
     anchors.fill: parent
     hoverEnabled: true
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
     cursorShape: root.clicked ? Qt.PointingHandCursor : Qt.ArrowCursor
     onEntered: {
+      hoverHoldTimer.stop();
+      hoverHold = false;
       hovered = true;
       root.entered();
       TooltipService.show(root, root.tooltipText, BarService.getTooltipDirection(root.screen?.name), (forceOpen || forceClose) ? Style.tooltipDelay : Style.tooltipDelayLong);
@@ -323,6 +333,8 @@ Item {
     onReleased: root.pressed = false
     onCanceled: root.pressed = false
     onClicked: mouse => {
+                 hoverHold = true;
+                 hoverHoldTimer.restart();
                  TooltipService.hide();
                  if (mouse.button === Qt.LeftButton) {
                    root.clicked();
