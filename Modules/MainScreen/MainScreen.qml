@@ -43,6 +43,9 @@ PanelWindow {
     Logger.d("MainScreen", "Initialized for screen:", screen?.name, "- Dimensions:", screen?.width, "x", screen?.height, "- Position:", screen?.x, ",", screen?.y);
   }
 
+  // This full-screen surface must stay on Top. Promoting it to Overlay makes
+  // its backing buffer cover fullscreen clients; only BarContentWindow is
+  // promoted for a fullscreen bar peek.
   WlrLayershell.layer: WlrLayer.Top
   WlrLayershell.namespace: "noctalia-background-" + (screen?.name || "unknown")
   WlrLayershell.exclusionMode: ExclusionMode.Ignore // Don't reserve space - BarExclusionZone handles that

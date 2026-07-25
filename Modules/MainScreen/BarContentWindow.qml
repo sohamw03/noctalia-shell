@@ -18,7 +18,9 @@ PanelWindow {
   id: barWindow
 
   // Note: screen property is inherited from PanelWindow and should be set by parent
-  color: "transparent" // Transparent - background is in MainScreen below
+  // When peeking over a fullscreen client, MainScreen remains below that
+  // client. Give this compact overlay surface its own background instead.
+  color: BarService.fullscreenOverlayActive ? Qt.alpha(Color.mSurface, Settings.data.bar.useSeparateOpacity ? Style.effectiveBarOpacity : Style.effectivePanelOpacity) : "transparent"
 
   // Window invisible when auto-hidden (blocks input) or toggled off via IPC.
   // windowVisible stays true briefly after isHidden to allow fade-out animation.
@@ -33,7 +35,10 @@ PanelWindow {
 
   // Wayland layer configuration
   WlrLayershell.namespace: "noctalia-bar-content-" + (barWindow.screen?.name || "unknown")
-  WlrLayershell.layer: WlrLayer.Top
+  // Fullscreen clients are above Top-layer surfaces in Hyprland. Promote the
+  // content only for an explicit fullscreen peek so the normal bar keeps its
+  // usual stacking behavior.
+  WlrLayershell.layer: BarService.fullscreenOverlayActive ? WlrLayer.Overlay : WlrLayer.Top
   WlrLayershell.exclusionMode: ExclusionMode.Ignore // Don't reserve space - BarExclusionZone in MainScreen handles that
 
   // Position and size to match bar location (per-screen)

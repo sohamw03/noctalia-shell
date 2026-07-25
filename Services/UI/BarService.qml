@@ -11,6 +11,11 @@ Singleton {
 
   property bool isVisible: true
 
+  // Temporarily put the compact bar-content surface above fullscreen clients.
+  // This deliberately does not change isVisible: a fullscreen peek must not
+  // alter the user's normal bar visibility state.
+  property bool fullscreenOverlayActive: false
+
   // Computed visibility that factors in compositor overview state
   readonly property bool effectivelyVisible: {
     if (!isVisible) {
@@ -148,6 +153,14 @@ Singleton {
     if (!hasAutoHideScreens) {
       isVisible = false;
     }
+  }
+
+  function showFullscreenOverlay() {
+    fullscreenOverlayActive = true;
+  }
+
+  function hideFullscreenOverlay() {
+    fullscreenOverlayActive = false;
   }
 
   // Temporarily show the bar, then auto-hide after the configured delay.

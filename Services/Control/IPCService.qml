@@ -55,6 +55,12 @@ Singleton {
     function showBar() {
       BarService.show();
     }
+    function showFullscreenOverlay() {
+      BarService.showFullscreenOverlay();
+    }
+    function hideFullscreenOverlay() {
+      BarService.hideFullscreenOverlay();
+    }
     function peek() {
       BarService.peek();
     }
