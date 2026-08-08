@@ -86,6 +86,7 @@ Singleton {
                                     "maxWidth": 145,
                                     "useFixedWidth": false,
                                     "colorizeIcons": false,
+                                    "disableAnimation": false,
                                     "textColor": "none"
                                   },
                                   "AudioVisualizer": {

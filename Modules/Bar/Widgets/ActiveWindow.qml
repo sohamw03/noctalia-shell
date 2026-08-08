@@ -47,6 +47,7 @@ Item {
   // Maximum widget width with user settings support
   readonly property real maxWidth: (widgetSettings.maxWidth !== undefined) ? widgetSettings.maxWidth : Math.max(widgetMetadata.maxWidth || 0, screen ? screen.width * 0.06 : 0)
   readonly property bool useFixedWidth: (widgetSettings.useFixedWidth !== undefined) ? widgetSettings.useFixedWidth : (widgetMetadata.useFixedWidth || false)
+  readonly property bool disableAnimation: (widgetSettings.disableAnimation !== undefined) ? widgetSettings.disableAnimation : (widgetMetadata.disableAnimation || false)
   readonly property string textColorKey: (widgetSettings.textColor !== undefined) ? widgetSettings.textColor : widgetMetadata.textColor
   readonly property color textColor: Color.resolveColorKey(textColorKey)
 
@@ -55,8 +56,31 @@ Item {
   readonly property real barHeight: Style.getBarHeightForScreen(screenName)
   readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
   readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
-  readonly property bool hasFocusedWindow: CompositorService.getFocusedWindow() !== null
-  readonly property string windowTitle: CompositorService.getFocusedWindowTitle() || "No active window"
+  readonly property var activeWorkspaceWindow: {
+    const focusedWindow = CompositorService.getFocusedWindow();
+    const currentWorkspace = CompositorService.getCurrentWorkspace();
+    if (!currentWorkspace)
+      return focusedWindow;
+    if (focusedWindow && String(focusedWindow.workspaceId) === String(currentWorkspace.id))
+      return focusedWindow;
+    const wsWindows = CompositorService.getWindowsForWorkspace(currentWorkspace.id);
+    if (wsWindows && wsWindows.length > 0) {
+      const focusedInWs = wsWindows.find(w => w.isFocused);
+      return focusedInWs || wsWindows[0];
+    }
+    return null;
+  }
+  readonly property bool hasFocusedWindow: activeWorkspaceWindow !== null
+  readonly property string windowTitle: {
+    if (activeWorkspaceWindow) {
+      var title = activeWorkspaceWindow.title;
+      if (title !== undefined) {
+        title = title.replace(/(\r\n|\n|\r)/g, "");
+      }
+      return title || "";
+    }
+    return "No active window";
+  }
   readonly property string fallbackIcon: "user-desktop"
 
   readonly property int iconSize: Style.toOdd(capsuleHeight * 0.75)
@@ -68,25 +92,27 @@ Item {
   implicitWidth: isVerticalBar ? (((!hasFocusedWindow) && hideMode === "hidden") ? 0 : verticalSize) : (((!hasFocusedWindow) && hideMode === "hidden") ? 0 : dynamicWidth)
 
   // "visible": Always Visible, "hidden": Hide When Empty, "transparent": Transparent When Empty
-  visible: (hideMode !== "hidden" || hasFocusedWindow) || opacity > 0
+  // A hidden widget must leave the scene immediately. Keeping it visible while
+  // fading out renders the fallback title/icon during workspace transitions.
+  visible: hideMode !== "hidden" || hasFocusedWindow
   opacity: ((hideMode !== "hidden" || hasFocusedWindow) && (hideMode !== "transparent" || hasFocusedWindow)) ? 1.0 : 0.0
   Behavior on opacity {
     NumberAnimation {
-      duration: Style.animationNormal
+      duration: disableAnimation ? 0 : Style.animationNormal
       easing.type: Easing.OutCubic
     }
   }
 
   Behavior on implicitWidth {
     NumberAnimation {
-      duration: Style.animationNormal
+        duration: disableAnimation ? 0 : Style.animationNormal
       easing.type: Easing.InOutCubic
     }
   }
 
   Behavior on implicitHeight {
     NumberAnimation {
-      duration: Style.animationNormal
+        duration: disableAnimation ? 0 : Style.animationNormal
       easing.type: Easing.InOutCubic
     }
   }
@@ -133,18 +159,17 @@ Item {
 
   function getAppIcon() {
     try {
-      // Try CompositorService first
-      const focusedWindow = CompositorService.getFocusedWindow();
-      if (focusedWindow && focusedWindow.appId) {
+      const targetWindow = activeWorkspaceWindow;
+      if (targetWindow && targetWindow.appId) {
         try {
-          const idValue = focusedWindow.appId;
+          const idValue = targetWindow.appId;
           const normalizedId = (typeof idValue === 'string') ? idValue : String(idValue);
           const iconResult = ThemeIcons.iconForAppId(normalizedId.toLowerCase());
           if (iconResult && iconResult !== "") {
             return iconResult;
           }
         } catch (iconError) {
-          Logger.w("ActiveWindow", "Error getting icon from CompositorService:", iconError);
+          Logger.w("ActiveWindow", "Error getting icon from targetWindow:", iconError);
         }
       }
 
@@ -210,7 +235,7 @@ Item {
     // Smooth width transition
     Behavior on width {
       NumberAnimation {
-        duration: Style.animationNormal
+        duration: disableAnimation ? 0 : Style.animationNormal
         easing.type: Easing.InOutCubic
       }
     }
@@ -366,19 +391,20 @@ Item {
   Connections {
     target: CompositorService
     function onActiveWindowChanged() {
-      try {
-        windowIcon.source = Qt.binding(getAppIcon);
-        windowIconVertical.source = Qt.binding(getAppIcon);
-      } catch (e) {
-        Logger.w("ActiveWindow", "Error in onActiveWindowChanged:", e);
-      }
+      updateIcons();
     }
     function onWindowListChanged() {
+      updateIcons();
+    }
+    function onWorkspaceChanged() {
+      updateIcons();
+    }
+    function updateIcons() {
       try {
         windowIcon.source = Qt.binding(getAppIcon);
         windowIconVertical.source = Qt.binding(getAppIcon);
       } catch (e) {
-        Logger.w("ActiveWindow", "Error in onWindowListChanged:", e);
+        Logger.w("ActiveWindow", "Error updating icons:", e);
       }
     }
   }

@@ -33,6 +33,8 @@
   "bar": {
     "active-window": {
       "colorize-icons-description": "Apply theme colors to active window icon.",
+      "disable-animation-description": "Disable show and hide transitions for this widget.",
+      "disable-animation-label": "Disable widget animations",
       "hide-mode-description": "Controls how the widget behaves when no window is active.",
       "scrolling-mode-description": "Control when text scrolling is enabled for long window titles.",
       "show-app-icon-description": "Display the application icon next to the window title.",

@@ -23,6 +23,7 @@ ColumnLayout {
   property int valueMaxWidth: widgetData.maxWidth !== undefined ? widgetData.maxWidth : widgetMetadata.maxWidth
   property bool valueUseFixedWidth: widgetData.useFixedWidth !== undefined ? widgetData.useFixedWidth : widgetMetadata.useFixedWidth
   property bool valueColorizeIcons: widgetData.colorizeIcons !== undefined ? widgetData.colorizeIcons : widgetMetadata.colorizeIcons
+  property bool valueDisableAnimation: widgetData.disableAnimation !== undefined ? widgetData.disableAnimation : widgetMetadata.disableAnimation
   property string valueTextColor: widgetData.textColor !== undefined ? widgetData.textColor : widgetMetadata.textColor
 
   Component.onCompleted: {
@@ -40,6 +41,7 @@ ColumnLayout {
     settings.maxWidth = parseInt(widthInput.text) || widgetMetadata.maxWidth;
     settings.useFixedWidth = valueUseFixedWidth;
     settings.colorizeIcons = valueColorizeIcons;
+    settings.disableAnimation = valueDisableAnimation;
     settings.textColor = valueTextColor;
     settingsChanged(settings);
   }
@@ -138,6 +140,18 @@ ColumnLayout {
                  saveSettings();
                }
     defaultValue: widgetMetadata.useFixedWidth
+  }
+
+  NToggle {
+    Layout.fillWidth: true
+    label: I18n.tr("bar.active-window.disable-animation-label")
+    description: I18n.tr("bar.active-window.disable-animation-description")
+    checked: valueDisableAnimation
+    onToggled: checked => {
+                  valueDisableAnimation = checked;
+                  saveSettings();
+                }
+    defaultValue: widgetMetadata.disableAnimation
   }
 
   NComboBox {
