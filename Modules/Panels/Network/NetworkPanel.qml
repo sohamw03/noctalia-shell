@@ -249,7 +249,7 @@ SmartPanel {
           horizontalPolicy: ScrollBar.AlwaysOff
           verticalPolicy: ScrollBar.AsNeeded
           showScrollbarWhenScrollable: true
-          reserveScrollbarSpace: false
+          reserveScrollbarSpace: true
           gradientColor: Color.mSurface
 
           ColumnLayout {
