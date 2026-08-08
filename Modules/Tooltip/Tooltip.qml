@@ -15,6 +15,7 @@ PopupWindow {
   property int margin: Style.marginXS // distance from target
   property int padding: Style.marginM
   property int gridPaddingVertical: Style.marginXS // extra vertical padding for grid mode
+  property int gridPaddingHorizontal: Style.marginS // extra horizontal padding for grid mode
   property int delay: 0
   property int hideDelay: 0
   property int maxWidth: 340
@@ -196,7 +197,7 @@ PopupWindow {
       direction = "auto";
     }
 
-    tooltipText.family = fontFamily ? fontFamily : Settings.data.ui.fontDefault;
+    tooltipText.family = fontFamily ? fontFamily : Settings.data.ui.fontFixed;
   }
 
   // Calculate grid dimensions using measurements that match actual NText rendering
@@ -215,7 +216,24 @@ PopupWindow {
     for (let col = 0; col < numCols; col++) {
       let maxWidth = 0;
       for (let row = 0; row < numRows; row++) {
-        cellMetrics.text = rows[row][col] || "";
+        const item = (rows[row] && rows[row][col] !== undefined) ? rows[row][col] : "";
+        let cellText = "";
+        let cellIconKey = "";
+        if (typeof item === "object" && item !== null) {
+          cellText = item.text !== undefined ? String(item.text) : "";
+          cellIconKey = item.icon || (cellText ? (Icons.get(cellText) ? cellText : "") : "");
+        } else {
+          cellText = String(item);
+          cellIconKey = Icons.get(cellText) ? cellText : "";
+        }
+        const iconGlyph = cellIconKey ? Icons.get(cellIconKey) : "";
+        if (iconGlyph !== undefined && iconGlyph !== "") {
+          cellMetrics.font.family = Icons.fontFamily;
+          cellMetrics.text = iconGlyph;
+        } else {
+          cellMetrics.font.family = tooltipText.family;
+          cellMetrics.text = cellText;
+        }
         if (cellMetrics.width > maxWidth) {
           maxWidth = cellMetrics.width;
         }
@@ -229,10 +247,13 @@ PopupWindow {
       totalWidth += columnWidths[i];
     }
     totalWidth += (numCols - 1) * Style.marginM; // columnSpacing
+    if (numCols === 6) {
+      totalWidth += Style.marginS; // inter-column gap (matches Layout.rightMargin on col 2)
+    }
 
     // Calculate total height using hidden NText for accurate row height
     const rowHeight = rowHeightMeasure.implicitHeight;
-    const totalHeight = numRows * rowHeight;
+    const totalHeight = numRows * rowHeight + (numRows - 1) * Style.marginS; // include rowSpacing
 
     return {
       width: totalWidth,
@@ -248,6 +269,7 @@ PopupWindow {
 
     // Calculate tooltip dimensions based on content mode
     let contentWidth, contentHeight;
+    const maxAllowedWidth = isGridMode ? Math.max(maxWidth, screenWidth * 0.8) : maxWidth;
     if (isGridMode) {
       const gridSize = calculateGridSize();
       contentWidth = gridSize.width;
@@ -257,11 +279,12 @@ PopupWindow {
       contentHeight = tooltipText.implicitHeight;
     }
 
-    const extraPad = isGridMode ? gridPaddingVertical : 0;
-    const tipWidth = Math.ceil(Math.min(contentWidth + ((padding + extraPad) * 2), maxWidth));
+    const hPad = isGridMode ? gridPaddingHorizontal : 0;
+    const vPad = isGridMode ? gridPaddingVertical : 0;
+    const tipWidth = Math.ceil(Math.min(contentWidth + ((padding + hPad) * 2), maxAllowedWidth));
     root.implicitWidth = tipWidth;
 
-    const tipHeight = Math.ceil(contentHeight + ((padding + extraPad) * 2));
+    const tipHeight = Math.ceil(contentHeight + ((padding + vPad) * 2));
     root.implicitHeight = tipHeight;
 
     // Get target's global position and convert to screen-relative
@@ -490,6 +513,7 @@ PopupWindow {
     // Recalculate dimensions based on content mode
     // Use calculateGridSize() for consistency with initial show
     let contentWidth, contentHeight;
+    const maxAllowedWidth = isGridMode ? Math.max(maxWidth, screenWidth * 0.8) : maxWidth;
     if (isGridMode) {
       const gridSize = calculateGridSize();
       contentWidth = gridSize.width;
@@ -499,11 +523,12 @@ PopupWindow {
       contentHeight = tooltipText.implicitHeight;
     }
 
-    const extraPad = isGridMode ? gridPaddingVertical : 0;
-    const tipWidth = Math.ceil(Math.min(contentWidth + ((padding + extraPad) * 2), maxWidth));
+    const hPad = isGridMode ? gridPaddingHorizontal : 0;
+    const vPad = isGridMode ? gridPaddingVertical : 0;
+    const tipWidth = Math.ceil(Math.min(contentWidth + ((padding + hPad) * 2), maxAllowedWidth));
     root.implicitWidth = tipWidth;
 
-    const tipHeight = Math.ceil(contentHeight + ((padding + extraPad) * 2));
+    const tipHeight = Math.ceil(contentHeight + ((padding + vPad) * 2));
     root.implicitHeight = tipHeight;
 
     // Reposition based on current direction (screen-relative)
@@ -673,18 +698,29 @@ PopupWindow {
         visible: root.isGridMode
         anchors.centerIn: parent
         columns: root.columnCount
-        rowSpacing: 0
+        rowSpacing: Style.marginS
         columnSpacing: Style.marginM
 
         Repeater {
           model: root.isGridMode ? [].concat.apply([], root.rows) : []
 
           NText {
-            text: modelData
+            readonly property var cellObj: typeof modelData === "object" && modelData !== null ? modelData : {}
+            readonly property string rawText: cellObj.text !== undefined ? String(cellObj.text) : (typeof modelData === "string" ? modelData : "")
+            readonly property string iconKey: cellObj.icon !== undefined ? String(cellObj.icon) : (typeof modelData === "string" && Icons.get(modelData) ? modelData : "")
+            readonly property string iconGlyph: iconKey ? (Icons.get(iconKey) || "") : ""
+            readonly property bool isIcon: iconGlyph !== ""
+            readonly property bool isValueCol: root.columnCount === 6 && (index % 6 === 2 || index % 6 === 5)
+
+            text: isIcon ? iconGlyph : rawText
             pointSize: Style.fontSizeS
-            family: tooltipText.family
-            color: Color.mOnSurfaceVariant
+            family: isIcon ? Icons.fontFamily : tooltipText.family
+            color: cellObj.color !== undefined ? cellObj.color : (isIcon ? Color.mOnSurfaceVariant : (isValueCol || (root.columnCount === 2 && index % 2 === 1) ? Color.mOnSurface : Color.mOnSurfaceVariant))
+            horizontalAlignment: cellObj.align !== undefined ? cellObj.align : (isValueCol ? Text.AlignRight : Text.AlignLeft)
             Layout.preferredHeight: rowHeightMeasure.implicitHeight
+            Layout.fillWidth: isValueCol
+            Layout.alignment: isValueCol ? Qt.AlignRight : Qt.AlignLeft
+            Layout.rightMargin: (root.columnCount === 6 && (index % 6 === 2)) ? Style.marginS : 0
           }
         }
       }

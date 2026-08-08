@@ -1906,11 +1906,11 @@
     "cpu-temp": "CPU temp",
     "cpu-usage": "CPU usage",
     "disk": "Disk",
-    "download-speed": "Download speed",
+    "download-speed": "Download",
     "gpu-temp": "GPU temp",
     "load-average": "Load average",
     "title": "System Monitor",
-    "upload-speed": "Upload speed"
+    "upload-speed": "Upload"
   },
   "toast": {
     "airplane-mode": {

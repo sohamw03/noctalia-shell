@@ -791,8 +791,9 @@ Item {
             IconImage {
               id: groupedAppIcon
 
-              width: parent.width
-              height: parent.height
+              width: root.iconSize
+              height: root.iconSize
+              anchors.centerIn: parent
 
               source: {
                 root.iconRevision; // Force re-evaluation when revision changes
@@ -822,6 +823,14 @@ Item {
               }
             }
 
+            Item {
+              id: groupedTooltipAnchor
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: groupedContainer.top
+              anchors.bottom: groupedContainer.bottom
+            }
+
             MouseArea {
               anchors.fill: parent
               hoverEnabled: true
@@ -847,10 +856,10 @@ Item {
               onEntered: {
                 if (!modelData)
                   return;
-                TooltipService.show(groupedTaskbarItem, modelData.title || modelData.appId || "Unknown app.", BarService.getTooltipDirection(root.screenName));
+                TooltipService.show(groupedTooltipAnchor, modelData.title || modelData.appId || "Unknown app.", BarService.getTooltipDirection(root.screenName));
               }
               onExited: {
-                TooltipService.hide();
+                TooltipService.hide(groupedTooltipAnchor);
               }
             }
           }
@@ -883,20 +892,15 @@ Item {
               return Color.resolveColorKey(root.focusedColor);
             if (groupedContainer.workspaceModel.isUrgent)
               return Color.mError;
+            const occKey = root.occupiedColor === "secondary" ? "surfaceVariant" : root.occupiedColor;
+            const empKey = root.emptyColor === "secondary" ? "surfaceVariant" : root.emptyColor;
             if (groupedContainer.hasWindows)
-              return Color.resolveColorKey(root.occupiedColor);
+              return Color.resolveColorKey(occKey);
 
-            return Color.resolveColorKey(root.emptyColor);
+            return Color.resolveColorKey(empKey);
           }
 
-          scale: groupedContainer.workspaceModel.isActive ? 1.0 : 0.8
-
-          Behavior on scale {
-            NumberAnimation {
-              duration: Style.animationNormal
-              easing.type: Easing.OutBack
-            }
-          }
+          scale: 1.0
 
           Behavior on color {
             enabled: !Color.isTransitioning
@@ -952,10 +956,12 @@ Item {
               return Color.resolveOnColorKey(root.focusedColor);
             if (groupedContainer.workspaceModel.isUrgent)
               return Color.mOnError;
+            const occKey = root.occupiedColor === "secondary" ? "surfaceVariant" : root.occupiedColor;
+            const empKey = root.emptyColor === "secondary" ? "surfaceVariant" : root.emptyColor;
             if (groupedContainer.hasWindows)
-              return Color.resolveOnColorKey(root.occupiedColor);
+              return Color.resolveOnColorKey(occKey);
 
-            return Color.resolveOnColorKey(root.emptyColor);
+            return Color.resolveOnColorKey(empKey);
           }
 
           Behavior on opacity {

@@ -91,9 +91,11 @@ Item {
         return Color.resolveColorKey(focusedColor);
       if (workspace.isUrgent)
         return Color.mError;
+      const occKey = occupiedColor === "secondary" ? "surfaceVariant" : occupiedColor;
+      const empKey = emptyColor === "secondary" ? "surfaceVariant" : emptyColor;
       if (workspace.isOccupied)
-        return Color.resolveColorKey(occupiedColor);
-      return Qt.alpha(Color.resolveColorKey(emptyColor), 0.3);
+        return Color.resolveColorKey(occKey);
+      return Qt.alpha(Color.resolveColorKey(empKey), 0.3);
     }
 
     Loader {
@@ -133,9 +135,11 @@ Item {
               return Color.resolveOnColorKey(focusedColor);
             if (workspace.isUrgent)
               return Color.mOnError;
+            const occKey = occupiedColor === "secondary" ? "surfaceVariant" : occupiedColor;
+            const empKey = emptyColor === "secondary" ? "surfaceVariant" : emptyColor;
             if (workspace.isOccupied)
-              return Color.resolveOnColorKey(occupiedColor);
-            return Color.resolveOnColorKey(emptyColor);
+              return Color.resolveOnColorKey(occKey);
+            return Color.resolveOnColorKey(empKey);
           }
 
         }

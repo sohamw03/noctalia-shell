@@ -306,8 +306,8 @@ Singleton {
                                     "enableScrollWheel": true,
                                     "iconScale": 0.8,
                                     "focusedColor": "primary",
-                                    "occupiedColor": "secondary",
-                                    "emptyColor": "secondary",
+                                    "occupiedColor": "surfaceVariant",
+                                    "emptyColor": "surfaceVariant",
                                     "showBadge": true,
                                     "pillSize": 0.6,
                                     "fontWeight": "bold"

@@ -313,6 +313,8 @@ Singleton {
       return root.mTertiary;
     case "error":
       return root.mError;
+    case "surfaceVariant":
+      return root.mSurfaceVariant;
     default:
       return root.mOnSurface;
     }
@@ -328,6 +330,8 @@ Singleton {
       return root.mOnTertiary;
     case "error":
       return root.mOnError;
+    case "surfaceVariant":
+      return root.mOnSurfaceVariant;
     default:
       return root.mSurface;
     }

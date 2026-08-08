@@ -97,49 +97,102 @@ Item {
   // Build comprehensive tooltip text with all stats
   function buildTooltipContent() {
     let rows = [];
+    let metrics = [];
 
-    // CPU
-    rows.push([I18n.tr("system-monitor.cpu-usage"), `${Math.round(SystemStatService.cpuUsage)}% (${SystemStatService.cpuFreq.replace(/[^0-9.]/g, "")} GHz)`]);
-    if (showCpuCores) {
-      SystemStatService.coresUsage.forEach((usage, core) => rows.push(["  " + I18n.tr("system-monitor.core-usage", {
-                                                                                        "id": core
-                                                                                      }), `${Math.round(usage)}%`]));
+    function addPair(icon1, label1, val1, icon2, label2, val2) {
+      rows.push([
+        icon1 || "", label1 || "", val1 || "",
+        icon2 || "", label2 || "", val2 || ""
+      ]);
     }
 
+    // CPU Usage & Frequency
+    metrics.push({
+      icon: "cpu-usage",
+      label: I18n.tr("system-monitor.cpu-usage"),
+      value: `${Math.round(SystemStatService.cpuUsage)}% (${SystemStatService.cpuFreq.replace(/[^0-9.]/g, "")} GHz)`
+    });
+
+    // CPU Temp (if available)
     if (SystemStatService.cpuTemp > 0) {
-      rows.push([I18n.tr("system-monitor.cpu-temp"), `${Math.round(SystemStatService.cpuTemp)}°C`]);
+      metrics.push({
+        icon: "cpu-temperature",
+        label: I18n.tr("system-monitor.cpu-temp"),
+        value: `${Math.round(SystemStatService.cpuTemp)}°C`
+      });
     }
 
-    // GPU (if available)
-    if (SystemStatService.gpuAvailable) {
-      rows.push([I18n.tr("system-monitor.gpu-temp"), `${Math.round(SystemStatService.gpuTemp)}°C`]);
-    }
 
-    // Load Average
-    if (SystemStatService.loadAvg1 >= 0) {
-      rows.push([I18n.tr("system-monitor.load-average"), `${SystemStatService.loadAvg1.toFixed(2)} · ${SystemStatService.loadAvg5.toFixed(2)} · ${SystemStatService.loadAvg15.toFixed(2)}`]);
-    }
 
-    // Memory
-    rows.push([I18n.tr("common.memory"), `${Math.round(SystemStatService.memPercent)}% (${(SystemStatService.memGb).toFixed(1)} GiB)`]);
+    // Memory — used / total
+    metrics.push({
+      icon: "memory",
+      label: I18n.tr("common.memory"),
+      value: `${(SystemStatService.memGb).toFixed(1)} / ${(SystemStatService.memTotalGb).toFixed(1)} GiB`
+    });
 
-    // Swap (if available)
-    if (SystemStatService.swapTotalGb > 0) {
-      rows.push([I18n.tr("bar.system-monitor.swap-usage-label"), `${Math.round(SystemStatService.swapPercent)}% (${(SystemStatService.swapGb).toFixed(1)} GiB)`]);
-    }
 
-    // Network
-    rows.push([I18n.tr("system-monitor.download-speed"), `${SystemStatService.formatSpeed(SystemStatService.rxSpeed).replace(/([0-9.]+)([A-Za-z]+)/, "$1 $2")}` + "/s"]);
-    rows.push([I18n.tr("system-monitor.upload-speed"), `${SystemStatService.formatSpeed(SystemStatService.txSpeed).replace(/([0-9.]+)([A-Za-z]+)/, "$1 $2")}` + "/s"]);
-
-    // Disk
+    // Disk — used / total
     const diskPercent = SystemStatService.diskPercents[diskPath];
     if (diskPercent !== undefined) {
       const usedGb = SystemStatService.diskUsedGb[diskPath] || 0;
       const sizeGb = SystemStatService.diskSizeGb[diskPath] || 0;
-      const availGb = SystemStatService.diskAvailableGb[diskPath] || 0;
-      rows.push([I18n.tr("system-monitor.disk"), `${diskPercent}% (${usedGb.toFixed(1)} / ${sizeGb.toFixed(1)} GB)`]);
-      rows.push([I18n.tr("common.available"), `${availGb.toFixed(1)} GB`]);
+
+      metrics.push({
+        icon: "storage",
+        label: I18n.tr("system-monitor.disk"),
+        value: `${usedGb.toFixed(1)} / ${sizeGb.toFixed(1)} GB`
+      });
+    }
+
+    // Network Download
+    metrics.push({
+      icon: "download-speed",
+      label: I18n.tr("system-monitor.download-speed"),
+      value: `${SystemStatService.formatSpeed(SystemStatService.rxSpeed).replace(/([0-9.]+)([A-Za-z]+)/, "$1 $2")}/s`
+    });
+
+    // Network Upload
+    metrics.push({
+      icon: "upload-speed",
+      label: I18n.tr("system-monitor.upload-speed"),
+      value: `${SystemStatService.formatSpeed(SystemStatService.txSpeed).replace(/([0-9.]+)([A-Za-z]+)/, "$1 $2")}/s`
+    });
+
+    // GPU Temp (if available) — last left column
+    if (SystemStatService.gpuAvailable) {
+      metrics.push({
+        icon: "gpu-temperature",
+        label: I18n.tr("system-monitor.gpu-temp"),
+        value: `${Math.round(SystemStatService.gpuTemp)}°C`
+      });
+    }
+
+    // Pair metrics into 6-column rows
+    for (let i = 0; i < metrics.length; i += 2) {
+      const m1 = metrics[i];
+      const m2 = metrics[i + 1];
+      if (m2) {
+        addPair(m1.icon, m1.label, m1.value, m2.icon, m2.label, m2.value);
+      } else {
+        addPair(m1.icon, m1.label, m1.value, "", "", "");
+      }
+    }
+
+    // CPU Cores (if enabled) - paired side-by-side
+    if (showCpuCores && SystemStatService.coresUsage && SystemStatService.coresUsage.length > 0) {
+      const cores = SystemStatService.coresUsage;
+      for (let c = 0; c < cores.length; c += 2) {
+        const label1 = I18n.tr("system-monitor.core-usage", { "id": c });
+        const val1 = `${Math.round(cores[c])}%`;
+        let label2 = "";
+        let val2 = "";
+        if (c + 1 < cores.length) {
+          label2 = I18n.tr("system-monitor.core-usage", { "id": c + 1 });
+          val2 = `${Math.round(cores[c + 1])}%`;
+        }
+        addPair("", label1, val1, "", label2, val2);
+      }
     }
 
     return rows;
