@@ -17,6 +17,7 @@ SmartPanel {
 
   preferredWidth: Math.round(440 * Style.uiScaleRatio)
   preferredHeight: Math.round(500 * Style.uiScaleRatio)
+  screenRightMargin: Style.marginS
 
   panelContent: Rectangle {
     id: panelContent

@@ -16,6 +16,7 @@ SmartPanel {
 
   preferredWidth: Math.round(440 * Style.uiScaleRatio)
   preferredHeight: Math.round(600 * Style.uiScaleRatio)
+  screenRightMargin: Style.marginS
 
   // Info panel collapsed by default, view mode persisted in settings
   // Ethernet details UI state (mirrors Wi‑Fi info behavior)

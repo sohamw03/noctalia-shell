@@ -45,6 +45,9 @@ Item {
   // Edge snapping: if panel is within this distance (in pixels) from a screen edge, snap
   property real edgeSnapDistance: 50
 
+  // Optional inset from the screen's right edge for panels that should not touch it.
+  property real screenRightMargin: 0
+
   // Track whether panel is open
   property bool isPanelOpen: false
 
@@ -444,7 +447,7 @@ Item {
         if (panelContent.allowAttach) {
           var cornerInset = root.barFloating ? Style.radiusL * 2 : 0;
           var barLeftEdge = (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) + cornerInset;
-          var barRightEdge = root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - cornerInset;
+          var barRightEdge = root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - cornerInset - root.screenRightMargin;
           panelX = Math.max(barLeftEdge, Math.min(panelX, barRightEdge - panelWidth));
         } else {
           panelX = Math.max(effMarginL, Math.min(panelX, root.width - panelWidth - effMarginR));
@@ -478,14 +481,14 @@ Item {
             var panelOnSameEdgeAsBar = (root.barPosition === "top" && root.effectivePanelAnchorTop) || (root.barPosition === "bottom" && root.effectivePanelAnchorBottom);
             if (!root.barIsVertical && root.barFloating && panelOnSameEdgeAsBar) {
               var rightCornerInset = Style.radiusL * 2;
-              calculatedX = root.width - root.barMarginH - rightCornerInset - panelWidth;
+              calculatedX = root.width - root.barMarginH - rightCornerInset - panelWidth - root.screenRightMargin;
             } else {
-              calculatedX = root.width - panelWidth - (root.isFramed ? root.frameThickness - root.attachmentOverlap : 0);
+              calculatedX = root.width - panelWidth - (root.isFramed ? root.frameThickness - root.attachmentOverlap : 0) - root.screenRightMargin;
             }
           }
         } else {
           // Not attached: position at right with margin
-          calculatedX = root.width - panelWidth - effMarginR;
+          calculatedX = root.width - panelWidth - effMarginR - root.screenRightMargin;
         }
       } else if (root.panelAnchorLeft) {
         // Use raw panelAnchorLeft for positioning decision
@@ -531,7 +534,7 @@ Item {
           if (panelContent.allowAttach) {
             var cornerInset = Style.radiusL + (root.barFloating ? Style.radiusL : 0);
             var barLeftEdge = (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) + cornerInset;
-            var barRightEdge = root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - cornerInset;
+            var barRightEdge = root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - cornerInset - root.screenRightMargin;
             var centeredX = (root.width - panelWidth) / 2;
             calculatedX = Math.max(barLeftEdge, Math.min(centeredX, barRightEdge - panelWidth));
           } else {
@@ -544,7 +547,7 @@ Item {
     // Edge snapping for X
     if (panelContent.allowAttach && !root.barFloating && root.width > 0 && panelWidth > 0) {
       var leftEdgePos = root.barPosition === "left" ? leftBarEdgeWithOverlap : (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH);
-      var rightEdgePos = root.barPosition === "right" ? rightBarEdgeWithOverlap - panelWidth : root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - panelWidth;
+      var rightEdgePos = root.barPosition === "right" ? rightBarEdgeWithOverlap - panelWidth : root.width - (root.isFramed ? root.frameThickness - root.attachmentOverlap : root.barMarginH) - panelWidth - root.screenRightMargin;
 
       // Only snap to left edge if panel is actually meant to be at left (or no explicit anchor)
       var shouldSnapToLeft = root.effectivePanelAnchorLeft || (!root.hasExplicitHorizontalAnchor && root.barPosition === "left");
