@@ -84,6 +84,8 @@ SmartPanel {
         return mirroredComponent;
       case "wave":
         return waveComponent;
+      case "random":
+        return randomComponent;
       default:
         return null;
       }
@@ -561,6 +563,18 @@ SmartPanel {
       fillColor: Color.mPrimary
       opacity: 0.4
       mirrored: Settings.data.audio.spectrumMirrored
+    }
+  }
+
+  Component {
+    id: randomComponent
+    NMirroredSpectrum {
+      width: parent.width - Style.marginS
+      height: parent.height - Style.marginS
+      values: SpectrumService.values
+      fillColor: Color.mPrimary
+      opacity: 0.4
+      randomize: true
     }
   }
 }

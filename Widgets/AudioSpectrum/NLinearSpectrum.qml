@@ -19,7 +19,6 @@ Item {
   readonly property int valuesCount: (values && values.length !== undefined) ? values.length : 0
   readonly property int totalBars: mirrored ? valuesCount * 2 : valuesCount
   readonly property real barSlotSize: totalBars > 0 ? (vertical ? height : width) / totalBars : 0
-  readonly property bool highQuality: (Settings.data.audio.visualizerType === "low") ? false : true
 
   Repeater {
     model: root.totalBars
@@ -30,17 +29,24 @@ Item {
       property real rawAmp: (root.values && root.values[valueIndex] !== undefined) ? root.values[valueIndex] : 0
       property real amp: (root.showMinimumSignal && rawAmp === 0) ? root.minimumSignalValue : rawAmp
 
+      // Pixel-snapped slots keep bar sides crisp; the amplitude length stays
+      // continuous so bars grow smoothly (AA handles the sub-pixel tip)
+      readonly property int slotStart: Math.round(index * root.barSlotSize)
+      readonly property int slotEnd: Math.round((index + 1) * root.barSlotSize)
+      readonly property int slotPx: Math.max(1, slotEnd - slotStart)
+      readonly property real ampLen: (vertical ? root.width : root.height) * amp
+
       color: root.fillColor
       border.color: root.strokeColor
       border.width: root.strokeWidth
-      antialiasing: root.highQuality
-      smooth: root.highQuality
+      antialiasing: true
+      smooth: false
 
       // Only update when value actually changes - reduces GPU load
-      width: vertical ? root.width * amp : root.barSlotSize * 0.5
-      height: vertical ? root.barSlotSize * 0.5 : root.height * amp
-      x: vertical ? (root.barPosition === "left" ? 0 : root.width - width) : index * root.barSlotSize + (root.barSlotSize * 0.25)
-      y: vertical ? index * root.barSlotSize + (root.barSlotSize * 0.25) : root.height - height
+      width: vertical ? ampLen : Math.max(1, Math.round(slotPx * 0.5))
+      height: vertical ? Math.max(1, Math.round(slotPx * 0.5)) : ampLen
+      x: vertical ? (root.barPosition === "left" ? 0 : Math.ceil(root.width) - width) : slotStart + Math.floor((slotPx - width) / 2)
+      y: vertical ? slotStart + Math.floor((slotPx - height) / 2) : Math.ceil(root.height) - height
 
       // Disable updates when invisible to save GPU
       visible: root.visible

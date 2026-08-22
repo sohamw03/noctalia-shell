@@ -303,6 +303,20 @@ Item {
             }
           }
 
+          Loader {
+            anchors.fill: parent
+            anchors.margins: 4
+            active: Settings.data.audio.visualizerType === "random"
+            z: 0
+            sourceComponent: NMirroredSpectrum {
+              anchors.fill: parent
+              values: SpectrumService.values
+              fillColor: Color.mPrimary
+              opacity: 0.4
+              randomize: true
+            }
+          }
+
           RowLayout {
             anchors.fill: parent
             anchors.margins: 8

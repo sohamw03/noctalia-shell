@@ -77,6 +77,8 @@ DraggableDesktopWidget {
           return mirroredComponent;
         case "wave":
           return waveComponent;
+        case "random":
+          return randomComponent;
         default:
           return null;
         }
@@ -114,6 +116,17 @@ DraggableDesktopWidget {
       fillColor: root.fillColor
       showMinimumSignal: true
       mirrored: Settings.data.audio.spectrumMirrored
+    }
+  }
+
+  Component {
+    id: randomComponent
+    NMirroredSpectrum {
+      anchors.fill: parent
+      values: SpectrumService.values
+      fillColor: root.fillColor
+      showMinimumSignal: true
+      randomize: true
     }
   }
 }

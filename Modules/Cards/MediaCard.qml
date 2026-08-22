@@ -148,6 +148,8 @@ NBox {
           return mirroredComponent;
         case "wave":
           return waveComponent;
+        case "random":
+          return randomComponent;
         default:
           return null;
         }
@@ -183,6 +185,17 @@ NBox {
           fillColor: Color.mPrimary
           opacity: 0.8
           mirrored: Settings.data.audio.spectrumMirrored
+        }
+      }
+
+      Component {
+        id: randomComponent
+        NMirroredSpectrum {
+          anchors.fill: parent
+          values: SpectrumService.values
+          fillColor: Color.mPrimary
+          opacity: 0.8
+          randomize: true
         }
       }
     }

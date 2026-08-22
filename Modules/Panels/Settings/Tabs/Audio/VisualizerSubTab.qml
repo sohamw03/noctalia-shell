@@ -28,6 +28,10 @@ ColumnLayout {
       {
         "key": "wave",
         "name": I18n.tr("options.visualizer-types.wave")
+      },
+      {
+        "key": "random",
+        "name": I18n.tr("options.visualizer-types.random")
       }
     ]
     currentKey: Settings.data.audio.visualizerType

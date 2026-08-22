@@ -723,7 +723,8 @@
     "visualizer-types": {
       "linear": "Linear",
       "mirrored": "Mirrored",
-      "wave": "Wave"
+      "wave": "Wave",
+      "random": "Random"
     },
     "visualizer-visibility": {
       "with-background": "With background only"

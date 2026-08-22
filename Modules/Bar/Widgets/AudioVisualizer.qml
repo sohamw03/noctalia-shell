@@ -115,6 +115,8 @@ Item {
           return mirroredComponent;
         case "wave":
           return waveComponent;
+        case "random":
+          return randomComponent;
         default:
           return null;
         }
@@ -139,20 +141,20 @@ Item {
     ]
 
     onTriggered: action => {
-                   contextMenu.close();
-                   if (screen) {
-                     PanelService.closeContextMenu(screen);
-                   }
+      contextMenu.close();
+      if (screen) {
+        PanelService.closeContextMenu(screen);
+      }
 
-                   if (action === "cycle-visualizer") {
-                     const types = ["linear", "mirrored", "wave"];
-                     const currentIndex = types.indexOf(currentVisualizerType);
-                     const nextIndex = (currentIndex + 1) % types.length;
-                     Settings.data.audio.visualizerType = types[nextIndex];
-                   } else if (action === "widget-settings" && screen) {
-                     BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
-                   }
-                 }
+      if (action === "cycle-visualizer") {
+        const types = ["linear", "mirrored", "wave", "random"];
+        const currentIndex = types.indexOf(currentVisualizerType);
+        const nextIndex = (currentIndex + 1) % types.length;
+        Settings.data.audio.visualizerType = types[nextIndex];
+      } else if (action === "widget-settings" && screen) {
+        BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
+      }
+    }
   }
 
   // Click to cycle through visualizer types
@@ -164,17 +166,17 @@ Item {
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
     onClicked: mouse => {
-                 if (mouse.button === Qt.RightButton) {
-                   if (screen) {
-                     PanelService.showContextMenu(contextMenu, root, screen);
-                   }
-                 } else {
-                   const types = ["linear", "mirrored", "wave"];
-                   const currentIndex = types.indexOf(currentVisualizerType);
-                   const nextIndex = (currentIndex + 1) % types.length;
-                   Settings.data.audio.visualizerType = types[nextIndex];
-                 }
-               }
+      if (mouse.button === Qt.RightButton) {
+        if (screen) {
+          PanelService.showContextMenu(contextMenu, root, screen);
+        }
+      } else {
+        const types = ["linear", "mirrored", "wave", "random"];
+        const currentIndex = types.indexOf(currentVisualizerType);
+        const nextIndex = (currentIndex + 1) % types.length;
+        Settings.data.audio.visualizerType = types[nextIndex];
+      }
+    }
   }
 
   Component {
@@ -211,6 +213,18 @@ Item {
       showMinimumSignal: true
       vertical: root.isVerticalBar
       mirrored: Settings.data.audio.spectrumMirrored
+    }
+  }
+
+  Component {
+    id: randomComponent
+    NMirroredSpectrum {
+      anchors.fill: parent
+      values: SpectrumService.values
+      fillColor: root.fillColor
+      showMinimumSignal: true
+      vertical: root.isVerticalBar
+      randomize: true
     }
   }
 }
