@@ -15,6 +15,7 @@ Item {
   // Minimum signal properties
   property bool showMinimumSignal: false
   property real minimumSignalValue: 0.01 // Default to 1% of height
+  property real minimumBarPx: 2 // Minimal visible extent in pixels
 
   // Pre-compute mirroring
   readonly property int valuesCount: (values && values.length !== undefined) ? values.length : 0
@@ -53,15 +54,12 @@ Item {
       }
 
       property real rawAmp: (root.values && root.values[valueIndex] !== undefined) ? root.values[valueIndex] : 0
-      property real amp: (root.showMinimumSignal && rawAmp === 0) ? root.minimumSignalValue : rawAmp
+      property real effectiveAmp: (root.showMinimumSignal || root.randomize) ? Math.max(rawAmp, root.minimumSignalValue) : rawAmp
+      property real rawBarSize: (vertical ? root.width : root.height) * effectiveAmp
+      property real barSize: (root.showMinimumSignal || root.randomize) ? Math.max(root.minimumBarPx, rawBarSize) : rawBarSize
 
-      property real barSize: (vertical ? root.width : root.height) * amp
-
-      // Pixel-snapped slots keep bar sides crisp; the amplitude length stays
-      // continuous so bars grow smoothly (AA handles the sub-pixel tips)
-      readonly property int slotStart: Math.round(index * root.barSlotSize)
-      readonly property int slotEnd: Math.round((index + 1) * root.barSlotSize)
-      readonly property int slotPx: Math.max(1, slotEnd - slotStart)
+      // Equal integer width - all bars same, pixel-snapped sides
+      readonly property int barWidthInt: Math.max(1, Math.round(root.barSlotSize * 0.8))
 
       color: root.fillColor
       border.color: root.strokeColor
@@ -69,10 +67,10 @@ Item {
       antialiasing: true
       smooth: false
 
-      width: vertical ? barSize : Math.max(1, Math.round(slotPx * 0.8))
-      height: vertical ? Math.max(1, Math.round(slotPx * 0.8)) : barSize
-      x: vertical ? root.centerX - (barSize / 2) : slotStart + Math.floor((slotPx - width) / 2)
-      y: vertical ? slotStart + Math.floor((slotPx - height) / 2) : root.centerY - (barSize / 2)
+      width: vertical ? barSize : barWidthInt
+      height: vertical ? barWidthInt : barSize
+      x: vertical ? root.centerX - (barSize / 2) : Math.round(index * root.barSlotSize + (root.barSlotSize - barWidthInt) / 2)
+      y: vertical ? Math.round(index * root.barSlotSize + (root.barSlotSize - barWidthInt) / 2) : root.centerY - (barSize / 2)
 
       // Disable updates when invisible to save GPU
       visible: root.visible
