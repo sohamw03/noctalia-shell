@@ -136,7 +136,7 @@ Singleton {
 
         // sysfs does not provide change notifications
         property variant refreshTimer: Timer {
-          interval: 200
+          interval: 50
           running: root.shouldRun && fileView.isWanted
           repeat: true
           onTriggered: fileView.reload()

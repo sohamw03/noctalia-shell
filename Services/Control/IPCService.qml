@@ -521,6 +521,14 @@ Singleton {
     function decrease() {
       AudioService.decreaseVolume();
     }
+    function adjust(delta: string) {
+      var deltaVal = parseFloat(delta);
+      if (Number.isNaN(deltaVal)) {
+        Logger.w("IPC", "Argument to ipc call 'volume adjust' must be a number");
+        return;
+      }
+      AudioService.setVolume(AudioService.volume + deltaVal);
+    }
     function muteOutput() {
       AudioService.setOutputMuted(!AudioService.muted);
     }

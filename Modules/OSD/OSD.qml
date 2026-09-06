@@ -658,8 +658,8 @@ Variants {
 
                 Behavior on width {
                   NumberAnimation {
-                    duration: Style.animationNormal
-                    easing.type: Easing.InOutQuad
+                    duration: Style.animationFaster
+                    easing.type: Easing.OutQuad
                   }
                 }
                 Behavior on color {
@@ -789,8 +789,8 @@ Variants {
 
                   Behavior on height {
                     NumberAnimation {
-                      duration: Style.animationNormal
-                      easing.type: Easing.InOutQuad
+                      duration: Style.animationFaster
+                      easing.type: Easing.OutQuad
                     }
                   }
                   Behavior on color {
