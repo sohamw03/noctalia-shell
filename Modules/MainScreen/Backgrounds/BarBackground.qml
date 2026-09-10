@@ -121,16 +121,8 @@ ShapePath {
   readonly property real leftEdgeOvs: (!isFramed && shouldShow && bar && bar.topLeftCornerState === -1 && bar.bottomLeftCornerState === -1 && barMappedPos.x <= 0) ? -screenEdgeOvershoot : 0
   readonly property real rightEdgeOvs: (!isFramed && shouldShow && bar && bar.topRightCornerState === -1 && bar.bottomRightCornerState === -1 && (barMappedPos.x + barWidth) >= screenWidth) ? screenEdgeOvershoot : 0
 
-  // Auto-hide opacity factor for background fade
+  // Auto-hide opacity factor (0 when hidden, 1 when visible)
   property real opacityFactor: (bar && bar.isHidden) ? 0 : 1
-
-  Behavior on opacityFactor {
-    enabled: bar && bar.autoHide
-    NumberAnimation {
-      duration: Style.animationFast
-      easing.type: Easing.OutQuad
-    }
-  }
 
   // ShapePath configuration
   strokeWidth: -1 // No stroke, fill only

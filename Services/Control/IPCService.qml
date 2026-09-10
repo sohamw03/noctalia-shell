@@ -498,6 +498,12 @@ Singleton {
         Settings.data.nightLight.forced = true;
       }
     }
+    // Re-assert the current settings against the compositor without changing
+    // them. Needed because `hyprctl reload` drops hyprshade's screen shader
+    // while the service still believes it is applied (same-state dedup).
+    function reapply() {
+      NightLightService.apply(true);
+    }
   }
 
   IpcHandler {

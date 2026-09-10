@@ -23,7 +23,6 @@ PanelWindow {
   color: BarService.fullscreenOverlayActive ? Qt.alpha(Color.mSurface, Settings.data.bar.useSeparateOpacity ? Style.effectiveBarOpacity : Style.effectivePanelOpacity) : "transparent"
 
   // Window invisible when auto-hidden (blocks input) or toggled off via IPC.
-  // windowVisible stays true briefly after isHidden to allow fade-out animation.
   property bool windowVisible: !isHidden
   visible: contentLoaded && windowVisible && BarService.effectivelyVisible
 
@@ -161,25 +160,10 @@ PanelWindow {
   // The bar is hidden via opacity + window visibility instead.
   property bool contentLoaded: false
 
-  // Delay window hide to allow fade-out animation to complete
-  Timer {
-    id: windowHideTimer
-    interval: Style.animationFast
-    onTriggered: {
-      if (barWindow.isHidden)
-        barWindow.windowVisible = false;
-    }
-  }
-
   onIsHiddenChanged: {
-    if (isHidden) {
-      // Delay window hide so fade-out is visible
-      windowHideTimer.restart();
-    } else {
-      windowHideTimer.stop();
-      windowVisible = true;
-      if (!contentLoaded)
-        contentLoaded = true;
+    windowVisible = !isHidden;
+    if (!isHidden && !contentLoaded) {
+      contentLoaded = true;
     }
   }
 
@@ -213,16 +197,7 @@ PanelWindow {
     sourceComponent: Item {
       anchors.fill: parent
 
-      // Fade animation
       opacity: barWindow.isHidden ? 0 : 1
-
-      Behavior on opacity {
-        enabled: barWindow.autoHide
-        NumberAnimation {
-          duration: Style.animationFast
-          easing.type: Easing.OutQuad
-        }
-      }
 
       Bar {
         id: barContent
