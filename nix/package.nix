@@ -5,7 +5,7 @@
     brightnessctl
     cliphist
     ddcutil
-    wlsunset
+    hyprshade
     wl-clipboard
     wlr-randr
     imagemagick
@@ -22,7 +22,7 @@
   brightnessctl,
   cliphist,
   ddcutil,
-  wlsunset,
+  hyprshade,
   wl-clipboard,
   wlr-randr,
   imagemagick,

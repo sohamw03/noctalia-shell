@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Services.System
 import qs.Services.UI
 
 Singleton {
@@ -11,45 +12,44 @@ Singleton {
 
   // Night Light properties - directly bound to settings
   readonly property var params: Settings.data.nightLight
-  property var lastCommand: []
 
-  // Crash tracking for auto-restart
-  property int _crashCount: 0
-  property int _maxCrashes: 5
+  // Generated shader lives in the shell cache dir and is rewritten
+  // whenever the night temperature changes.
+  readonly property string shaderPath: Settings.cacheDir + "noctalia-nightlight.glsl"
 
-  // Manual schedule tracking
-  property bool _manualNightPhase: false
+  // Tracks what we last asked hyprshade to do, so re-applying the same
+  // state doesn't recompile the shader (visible flicker) for nothing.
+  property bool shadeOn: false
+  property int lastTemp: -1
+  property bool autoWarned: false
 
-  // Kill any stale wlsunset processes on startup to prevent issues after shell restart
+  // One-time migration: kill orphans of the old wlsunset backend.
+  // (wlsunset can't drive gamma on Hyprland, but strays may linger.)
   Component.onCompleted: {
-    killStaleProcess.running = true;
+    cleanupOldBackend.running = true;
   }
 
   Process {
-    id: killStaleProcess
+    id: cleanupOldBackend
     running: false
-    command: ["pkill", "-x", "wlsunset"]
-    onExited: function (code, status) {
-      if (code === 0) {
-        Logger.i("NightLight", "Killed stale wlsunset process from previous session");
-      }
-      // Now apply the settings after cleanup
-      root.apply();
-    }
+    command: ["sh", "-c", "pkill -x wlsunset 2>/dev/null; exit 0"]
+    onExited: root.apply()
   }
 
-  Timer {
-    id: restartTimer
-    interval: 2000
-    repeat: false
-    onTriggered: {
-      if (root.params.enabled && !runner.running) {
-        Logger.w("NightLight", "Restarting after crash...");
-        if (root.isManualMode()) {
-          root.applyManualSchedule();
-        } else {
-          runner.running = true;
-        }
+  // One-shot runner: hyprshade applies instantly and exits, the compositor
+  // holds the shader. There is no daemon to supervise.
+  Process {
+    id: shadeRunner
+    running: false
+    stdout: StdioCollector {}
+    stderr: StdioCollector {}
+    onExited: function (code) {
+      if (code !== 0) {
+        Logger.e("NightLight", "hyprshade failed (code " + code + "):", stderr.text);
+        // Forget last intent so the next apply() retries instead of
+        // assuming the shader is on.
+        root.shadeOn = false;
+        root.lastTemp = -1;
       }
     }
   }
@@ -70,6 +70,14 @@ Singleton {
 
   function isManualMode() {
     return !params.forced && !params.autoSchedule;
+  }
+
+  function nightTemp() {
+    var t = parseInt(params.nightTemp);
+    if (isNaN(t)) {
+      t = 4500;
+    }
+    return Math.min(6500, Math.max(1000, t));
   }
 
   function isCurrentlyNight() {
@@ -101,34 +109,86 @@ Singleton {
     return diffMin * 60 * 1000 - now.getSeconds() * 1000 - now.getMilliseconds();
   }
 
+  // Tanner Helland approximation of black-body white point.
+  // Returns [r, g, b] multipliers in 0..1 for the given kelvin.
+  function kelvinToRgb(kelvin) {
+    var t = kelvin / 100.0;
+    var r, g, b;
+    if (t <= 66) {
+      r = 255;
+    } else {
+      r = 329.698727446 * Math.pow(t - 60, -0.1332047592);
+    }
+    if (t <= 66) {
+      g = 99.4708025861 * Math.log(t) - 161.1195681661;
+    } else {
+      g = 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+    }
+    if (t >= 66) {
+      b = 255;
+    } else if (t <= 19) {
+      b = 0;
+    } else {
+      b = 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+    }
+    function cl(v) {
+      return Math.min(1, Math.max(0, v / 255));
+    }
+    return [cl(r), cl(g), cl(b)];
+  }
+
+  // Fresh blue-light-filter screen shader with the white point for temp
+  // baked in, plus ordered dithering so crushing blue doesn't band.
+  function buildShader(temp) {
+    var rgb = kelvinToRgb(temp);
+    var r = rgb[0].toFixed(4);
+    var g = rgb[1].toFixed(4);
+    var b = rgb[2].toFixed(4);
+    return ["#version 320 es", "precision highp float;", "", "in vec2 v_texcoord;", "uniform sampler2D tex;", "out vec4 fragColor;", "", "// Night light white point for " + temp + "K (Tanner Helland approximation)", "const vec3 kWhitePoint = vec3(" + r + ", " + g + ", " + b + ");", "", "// Compact 4x4 Bayer ordered dither: hides banding after the warm", "// multiply crushes the blue channel.", "float bayer2(vec2 a) {", "  a = floor(a);", "  return fract(a.x / 2.0 + a.y * a.y * 0.75);", "}", "", "float bayer4(vec2 a) {", "  return bayer2(0.5 * a) * 0.25 + bayer2(a);", "}", "", "void main() {", "  vec4 color = texture(tex, v_texcoord);", "  color.rgb *= kWhitePoint;", "  color.rgb += (bayer4(gl_FragCoord.xy) - 0.5) * (1.5 / 255.0);", "  fragColor = color;", "}"].join("\n");
+  }
+
+  // Drive hyprshade to the desired state. Writes the shader file and
+  // applies it in a single one-shot process invocation.
+  function setShader(on, temp) {
+    if (!ProgramCheckerService.hyprshadeAvailable) {
+      Logger.w("NightLight", "hyprshade not available, cannot apply night light");
+      return;
+    }
+    if (!on) {
+      if (!root.shadeOn) {
+        return;
+      }
+      root.shadeOn = false;
+      root.lastTemp = -1;
+      shadeRunner.command = ["hyprshade", "off"];
+      shadeRunner.running = true;
+      Logger.i("NightLight", "Shader off");
+      return;
+    }
+    if (root.shadeOn && root.lastTemp === temp) {
+      return;
+    }
+    root.shadeOn = true;
+    root.lastTemp = temp;
+    var script = "cat > '" + root.shaderPath + "' <<'NOCTALIA_NL_EOF'\n" + buildShader(temp) + "\nNOCTALIA_NL_EOF\nhyprshade on '" + root.shaderPath + "'";
+    shadeRunner.command = ["sh", "-c", script];
+    shadeRunner.running = true;
+    Logger.i("NightLight", "Shader on (" + temp + "K)");
+  }
+
   function applyManualSchedule() {
     if (!params.enabled) {
       manualScheduleTimer.stop();
-      runner.running = false;
+      setShader(false, 0);
       return;
     }
 
-    var night = isCurrentlyNight();
-    _manualNightPhase = night;
-
-    if (night) {
-      var cmd = ["wlsunset"];
-      cmd.push("-t", `${params.nightTemp}`, "-T", `${params.dayTemp}`);
-      cmd.push("-S", "23:59");
-      cmd.push("-s", "00:00");
-      cmd.push("-d", 1);
-
-      if (JSON.stringify(cmd) !== JSON.stringify(lastCommand) || !runner.running) {
-        lastCommand = cmd;
-        runner.command = cmd;
-        runner.running = false;
-        runner.running = true;
-      }
-      Logger.i("NightLight", "Manual schedule: night phase - wlsunset forced on");
+    if (isCurrentlyNight()) {
+      setShader(true, nightTemp());
+      Logger.i("NightLight", "Manual schedule: night phase");
     } else {
-      lastCommand = [];
-      runner.running = false;
-      Logger.i("NightLight", "Manual schedule: day phase - wlsunset stopped");
+      setShader(false, 0);
+      Logger.i("NightLight", "Manual schedule: day phase");
     }
 
     var ms = msUntilNextBoundary();
@@ -138,6 +198,12 @@ Singleton {
   }
 
   function apply(force = false) {
+    if (force) {
+      // Bypass the same-state dedup below (resume / retry paths).
+      root.shadeOn = false;
+      root.lastTemp = -1;
+    }
+
     // If using LocationService, wait for it to be ready
     if (!params.forced && params.autoSchedule && !LocationService.coordinatesReady) {
       return;
@@ -145,8 +211,6 @@ Singleton {
 
     // Manual mode: handle scheduling ourselves
     if (isManualMode() && params.enabled) {
-      _crashCount = 0;
-      restartTimer.stop();
       applyManualSchedule();
       return;
     }
@@ -154,36 +218,19 @@ Singleton {
     // Not in manual mode - clean up manual timer
     manualScheduleTimer.stop();
 
-    var command = buildCommand();
-
-    // Compare with previous command to avoid unnecessary restart
-    if (force || JSON.stringify(command) !== JSON.stringify(lastCommand)) {
-      lastCommand = command;
-      runner.command = command;
-
-      // Set running to false so it may restart below if still enabled
-      runner.running = false;
+    if (params.autoSchedule) {
+      // hyprshade has no solar computation; stay off rather than tinting
+      // at the wrong time of day.
+      if (params.enabled && !root.autoWarned) {
+        root.autoWarned = true;
+        Logger.w("NightLight", "Solar auto-schedule is not supported by the hyprshade backend yet - use manual times or forced mode");
+      }
+      setShader(false, 0);
+      return;
     }
-    runner.running = params.enabled;
-  }
 
-  function buildCommand() {
-    var cmd = ["wlsunset"];
-    if (params.forced) {
-      // Force immediate full night temperature regardless of time
-      // Keep distinct day/night temps but set times so we're effectively always in "night"
-      cmd.push("-t", `${params.nightTemp}`, "-T", `${params.dayTemp}`);
-      // Night spans from sunset (00:00) to sunrise (23:59) covering almost the full day
-      cmd.push("-S", "23:59"); // sunrise very late
-      cmd.push("-s", "00:00"); // sunset at midnight
-      // Near-instant transition
-      cmd.push("-d", 1);
-    } else if (params.autoSchedule) {
-      cmd.push("-t", `${params.nightTemp}`, "-T", `${params.dayTemp}`);
-      cmd.push("-l", `${LocationService.stableLatitude}`, "-L", `${LocationService.stableLongitude}`);
-      cmd.push("-d", 60 * 15); // 15min progressive fade at sunset/sunrise
-    }
-    return cmd;
+    // Forced mode (or disabled): shader on at night temp, off otherwise.
+    setShader(params.enabled, nightTemp());
   }
 
   // Observe setting changes and location readiness
@@ -219,6 +266,16 @@ Singleton {
   }
 
   Connections {
+    target: ProgramCheckerService
+    function onHyprshadeAvailableChanged() {
+      if (ProgramCheckerService.hyprshadeAvailable) {
+        Logger.i("NightLight", "hyprshade became available - applying");
+        root.apply();
+      }
+    }
+  }
+
+  Connections {
     target: LocationService
     function onCoordinatesReadyChanged() {
       if (LocationService.coordinatesReady) {
@@ -243,48 +300,6 @@ Singleton {
       Logger.i("NightLight", "System resumed - re-applying night light");
       root.apply(true);
       resumeRetryTimer.restart();
-    }
-  }
-
-  // Foreground process runner
-  Process {
-    id: runner
-    running: false
-    onStarted: {
-      Logger.i("NightLight", "Wlsunset started:", runner.command);
-      // Reset crash count on successful start
-      if (root._crashCount > 0) {
-        root._crashCount = 0;
-      }
-    }
-    onExited: function (code, status) {
-      if (root.params.enabled && root.isManualMode()) {
-        // Manual mode: only treat as crash if we're in the night phase
-        if (root._manualNightPhase) {
-          root._crashCount++;
-          if (root._crashCount <= root._maxCrashes) {
-            Logger.w("NightLight", "Wlsunset exited unexpectedly during manual night phase (code: " + code + "), restarting in 2s... (attempt " + root._crashCount + "/" + root._maxCrashes + ")");
-            restartTimer.start();
-          } else {
-            Logger.e("NightLight", "Wlsunset crashed too many times (" + root._maxCrashes + "), giving up");
-          }
-        } else {
-          Logger.i("NightLight", "Wlsunset exited (manual day phase):", code, status);
-          root._crashCount = 0;
-        }
-      } else if (root.params.enabled) {
-        // Non-manual mode: any exit while enabled is a crash
-        root._crashCount++;
-        if (root._crashCount <= root._maxCrashes) {
-          Logger.w("NightLight", "Wlsunset exited unexpectedly (code: " + code + "), restarting in 2s... (attempt " + root._crashCount + "/" + root._maxCrashes + ")");
-          restartTimer.start();
-        } else {
-          Logger.e("NightLight", "Wlsunset crashed too many times (" + root._maxCrashes + "), giving up");
-        }
-      } else {
-        Logger.i("NightLight", "Wlsunset exited (disabled):", code, status);
-        root._crashCount = 0;
-      }
     }
   }
 }

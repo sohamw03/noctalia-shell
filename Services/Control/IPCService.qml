@@ -298,6 +298,16 @@ Singleton {
     }
   }
 
+  IpcHandler {
+    target: "osd"
+
+    // Show arbitrary text in the centered capslock-style OSD box.
+    // Usage: qs -p <shell> ipc call osd showText "some text" "icon-name"
+    function showText(text: string, icon: string) {
+      OSDService.show(text || "", icon || "");
+    }
+  }
+
   // Idle Inhibitor / Keep Awake
   IpcHandler {
     target: "idleInhibitor"
@@ -472,21 +482,20 @@ Singleton {
 
   IpcHandler {
     target: "nightLight"
+    // Strict two-state toggle: always-on (forced) or fully off.
+    // No scheduled/manual middle states.
     function toggle() {
-      if (!ProgramCheckerService.wlsunsetAvailable) {
-        Logger.w("IPC", "wlsunset not available, cannot toggle night light");
+      if (!ProgramCheckerService.hyprshadeAvailable) {
+        Logger.w("IPC", "hyprshade not available, cannot toggle night light");
         return;
       }
 
-      if (Settings.data.nightLight.forced) {
+      if (Settings.data.nightLight.enabled) {
+        Settings.data.nightLight.enabled = false;
         Settings.data.nightLight.forced = false;
       } else {
-        if (Settings.data.nightLight.enabled) {
-          Settings.data.nightLight.enabled = false;
-        } else {
-          Settings.data.nightLight.forced = true;
-          Settings.data.nightLight.enabled = true;
-        }
+        Settings.data.nightLight.enabled = true;
+        Settings.data.nightLight.forced = true;
       }
     }
   }

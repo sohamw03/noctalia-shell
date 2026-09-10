@@ -13,7 +13,7 @@ ColumnLayout {
 
   property var timeOptions
 
-  signal checkWlsunset
+  signal checkHyprshade
 
   NToggle {
     label: I18n.tr("panels.display.night-light-enable-label")
@@ -21,7 +21,7 @@ ColumnLayout {
     checked: Settings.data.nightLight.enabled
     onToggled: checked => {
                  if (checked) {
-                   root.checkWlsunset();
+                   root.checkHyprshade();
                  } else {
                    Settings.data.nightLight.enabled = false;
                    Settings.data.nightLight.forced = false;
@@ -209,7 +209,7 @@ ColumnLayout {
       onToggled: checked => {
                    Settings.data.nightLight.forced = checked;
                    if (checked && !Settings.data.nightLight.enabled) {
-                     root.checkWlsunset();
+                     root.checkHyprshade();
                    } else {
                      NightLightService.apply();
                    }

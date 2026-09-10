@@ -34,10 +34,10 @@ ColumnLayout {
     Qt.callLater(populateTimeOptions);
   }
 
-  // Check for wlsunset availability when enabling Night Light
+  // Check for hyprshade availability when enabling Night Light
   Process {
-    id: wlsunsetCheck
-    command: ["sh", "-c", "command -v wlsunset"]
+    id: hyprshadeCheck
+    command: ["sh", "-c", "command -v hyprshade"]
     running: false
 
     onExited: function (exitCode) {
@@ -86,7 +86,7 @@ ColumnLayout {
     BrightnessSubTab {}
     NightLightSubTab {
       timeOptions: timeOptions
-      onCheckWlsunset: wlsunsetCheck.running = true
+      onCheckHyprshade: hyprshadeCheck.running = true
     }
   }
 }

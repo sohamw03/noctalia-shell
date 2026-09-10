@@ -46,8 +46,8 @@ NIconButton {
   tooltipText: Settings.data.nightLight.enabled ? (Settings.data.nightLight.forced ? I18n.tr("common.night-light") : I18n.tr("common.night-light")) : I18n.tr("common.night-light")
   tooltipDirection: BarService.getTooltipDirection(screen?.name)
   onClicked: {
-    // Check if wlsunset is available before enabling night light
-    if (!ProgramCheckerService.wlsunsetAvailable) {
+    // Check if hyprshade is available before enabling night light
+    if (!ProgramCheckerService.hyprshadeAvailable) {
       ToastService.showWarning(I18n.tr("common.night-light"), I18n.tr("toast.night-light.not-installed"));
       return;
     }

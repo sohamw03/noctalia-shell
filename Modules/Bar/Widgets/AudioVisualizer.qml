@@ -68,30 +68,29 @@ Item {
 
   implicitWidth: contentWidth
   implicitHeight: contentHeight
-  visible: shouldShow
+  visible: shouldShow || root.opacity > 0
   opacity: shouldShow ? 1.0 : 0.0
+  clip: true
 
-  Behavior on implicitWidth {
+  Behavior on opacity {
     NumberAnimation {
       duration: Style.animationNormal
       easing.type: Easing.InOutCubic
     }
   }
-  Behavior on implicitHeight {
-    NumberAnimation {
-      duration: Style.animationNormal
-      easing.type: Easing.InOutCubic
-    }
-  }
+  // NOTE: no Behaviors on implicitWidth/implicitHeight on purpose. The
+  // spectrum lays out its bars as width/totalBars every frame, so animating
+  // the slot stretches/squishes the bars. The slot snaps; opacity fades.
 
   // Store visualizer type to force re-evaluation
   readonly property string currentVisualizerType: Settings.data.audio.visualizerType
 
-  // Visual capsule centered in parent
+  // Visual capsule fills the widget slot. It tracks root size (not the
+  // instant content size) so nothing can overflow onto neighbors.
   Rectangle {
     id: background
-    width: root.contentWidth
-    height: root.contentHeight
+    width: root.width
+    height: root.height
     anchors.centerIn: parent
     radius: Style.radiusS
     color: Style.capsuleColor

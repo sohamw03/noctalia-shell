@@ -15,7 +15,7 @@ Noctalia Shell is made possible by the incredible work of many open-source proje
 
 ### System Integration
 - **[brightnessctl](https://github.com/Hummer12007/brightnessctl)** - Screen brightness control
-- **[wlsunset](https://sr.ht/~kennylevinsen/wlsunset/)** - Night light and blue light filter support
+- **[hyprshade](https://github.com/loqusion/hyprshade)** - Night light and blue light filter support
 - **[wl-clipboard](https://github.com/bugaevc/wl-clipboard)** - Wayland clipboard utilities
 - **[ddcutil](https://www.ddcutil.com/)** - External display brightness control
 - **[power-profiles-daemon](https://gitlab.freedesktop.org/upower/power-profiles-daemon)** - Power profile management

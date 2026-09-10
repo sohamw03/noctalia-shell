@@ -13,7 +13,7 @@ Singleton {
   // Program availability properties
   property bool nmcliAvailable: false
   property bool bluetoothctlAvailable: false
-  property bool wlsunsetAvailable: false
+  property bool hyprshadeAvailable: false
   property bool gnomeCalendarAvailable: false
   property bool pythonAvailable: false
   property bool wtypeAvailable: false
@@ -22,7 +22,7 @@ Singleton {
   readonly property var programsToCheck: ({
                                             "bluetoothctlAvailable": ["sh", "-c", "command -v bluetoothctl"],
                                             "nmcliAvailable": ["sh", "-c", "command -v nmcli"],
-                                            "wlsunsetAvailable": ["sh", "-c", "command -v wlsunset"],
+                                            "hyprshadeAvailable": ["sh", "-c", "command -v hyprshade"],
                                             "gnomeCalendarAvailable": ["sh", "-c", "command -v gnome-calendar"],
                                             "wtypeAvailable": ["sh", "-c", "command -v wtype"],
                                             "pythonAvailable": ["sh", "-c", "command -v python3"]
@@ -40,15 +40,15 @@ Singleton {
   // Signal emitted when all checks are complete
   signal checksCompleted
 
-  // disable Night Light in settings if wlsunset is not available
+  // disable Night Light in settings if hyprshade is not available
   onChecksCompleted: {
-    if (!wlsunsetAvailable && Settings.data.nightLight.enabled) {
+    if (!hyprshadeAvailable && Settings.data.nightLight.enabled) {
       Settings.data.nightLight.enabled = false;
     }
   }
 
-  onWlsunsetAvailableChanged: {
-    if (!wlsunsetAvailable && Settings.data.nightLight.enabled) {
+  onHyprshadeAvailableChanged: {
+    if (!hyprshadeAvailable && Settings.data.nightLight.enabled) {
       Settings.data.nightLight.enabled = false;
     }
   }

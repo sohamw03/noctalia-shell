@@ -9,7 +9,7 @@ import qs.Widgets
 NIconButtonHot {
   property ShellScreen screen
 
-  enabled: ProgramCheckerService.wlsunsetAvailable
+  enabled: ProgramCheckerService.hyprshadeAvailable
   icon: Settings.data.nightLight.enabled ? (Settings.data.nightLight.forced ? "nightlight-forced" : "nightlight-on") : "nightlight-off"
   hot: Settings.data.nightLight.enabled
   tooltipText: I18n.tr("common.night-light")

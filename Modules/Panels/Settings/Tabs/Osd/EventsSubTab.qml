@@ -30,6 +30,10 @@ ColumnLayout {
       {
         type: OSD.Type.LockKey,
         key: "types-lockkey"
+      },
+      {
+        type: OSD.Type.Custom,
+        key: "types-custom-text"
       }
     ]
     delegate: NCheckbox {
