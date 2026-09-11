@@ -44,6 +44,7 @@ Variants {
     // Generic custom text popup (via OSDService.show / `ipc call osd showText`)
     property string customText: ""
     property string customIcon: ""
+    property bool customHold: false
 
     // Text-style popups render icon + text instead of a progress bar
     readonly property bool isTextMode: root.currentOSDType === OSD.Type.LockKey || root.currentOSDType === OSD.Type.Custom
@@ -381,13 +382,29 @@ Variants {
     }
 
     // Generic custom text popup via OSDService.show() / `ipc call osd showText`
+    // Held variant via OSDService.showHold() / `ipc call osd showHold` stays
+    // until OSDService.hide() / `ipc call osd hide`.
     Connections {
       target: OSDService
 
-      function onCustomRequested(text, icon) {
+      function onCustomRequested(text, icon, hold) {
         root.customText = text;
         root.customIcon = icon;
+        root.customHold = hold;
         root.showOSD(OSD.Type.Custom);
+      }
+
+      function onCustomHideRequested() {
+        // Always drop hold state; only hide visually when Custom is on screen.
+        // If Volume/Brightness preempted the hold, just drop the stale payload
+        // so the foreground OSD finishes its own auto-hide.
+        root.customHold = false;
+        if (root.currentOSDType === OSD.Type.Custom) {
+          root.hideOSD();
+        } else {
+          root.customText = "";
+          root.customIcon = "";
+        }
       }
     }
 
@@ -603,6 +620,7 @@ Variants {
             root.lastLockKeyChanged = "";
             root.customText = "";
             root.customIcon = "";
+            root.customHold = false;
             root.active = false;
           }
         }
@@ -873,7 +891,10 @@ Variants {
             osdItem.visible = true;
             osdItem.opacity = 1;
             osdItem.scale = 1.0;
-            hideTimer.start();
+            // Strict hold: Custom+hold never auto-hides, only `osd hide`.
+            if (!(root.currentOSDType === OSD.Type.Custom && root.customHold)) {
+              hideTimer.start();
+            }
           }
         }
 
@@ -900,6 +921,7 @@ Variants {
           root.currentOSDType = -1;
           root.customText = "";
           root.customIcon = "";
+          root.customHold = false;
           root.active = false;
         }
       }

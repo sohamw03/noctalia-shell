@@ -306,6 +306,16 @@ Singleton {
     function showText(text: string, icon: string) {
       OSDService.show(text || "", icon || "");
     }
+
+    // Held popup: stays visible until `osd hide` (strict hold, no auto-hide).
+    // Usage: qs -p <shell> ipc call osd showHold "Opening ..." "icon-name"
+    function showHold(text: string, icon: string) {
+      OSDService.showHold(text || "", icon || "");
+    }
+
+    function hide() {
+      OSDService.hide();
+    }
   }
 
   // Idle Inhibitor / Keep Awake
