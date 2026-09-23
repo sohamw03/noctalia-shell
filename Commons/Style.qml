@@ -81,6 +81,12 @@ Singleton {
   readonly property real effectivePanelOpacity: PowerProfileService.noctaliaPerformanceMode ? 1.0 : Color.adaptiveOpacity(Settings.data.ui.panelBackgroundOpacity)
   readonly property real effectiveBarOpacity: PowerProfileService.noctaliaPerformanceMode ? 1.0 : Settings.data.bar.backgroundOpacity
 
+  // Shared near-black surface for the bar and primary panels. Keep it stable
+  // across themes so menus and panels feel like one continuous desktop surface.
+  readonly property color surfaceBackgroundColor: "#0b0d10"
+  readonly property color barBackgroundColor: surfaceBackgroundColor
+  readonly property color panelBackgroundColor: surfaceBackgroundColor
+
   // Shadows
   readonly property real shadowOpacity: 0.85
   readonly property real shadowBlur: 1.0

@@ -92,6 +92,7 @@ Item {
               visible: text !== ""
               text: modelData
               family: useCustomFont && customFont ? customFont : Settings.data.ui.fontDefault
+              font.weight: Style.fontWeightBold
               Binding on pointSize {
                 value: {
                   if (repeater.model.length == 1) {
@@ -132,6 +133,7 @@ Item {
               visible: text !== ""
               text: modelData
               family: useCustomFont && customFont ? customFont : Settings.data.ui.fontDefault
+              font.weight: Style.fontWeightBold
               pointSize: barFontSize
               applyUiScale: false
               color: root.hoverForeground(textColor)

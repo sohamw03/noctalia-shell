@@ -125,7 +125,9 @@ ShapePath {
   property real opacityFactor: (bar && bar.isHidden) ? 0 : 1
 
   // ShapePath configuration
-  strokeWidth: -1 // No stroke, fill only
+  // The crisp edge highlight is rendered by BarHighlightWindow above the
+  // compositor-blurred background layer.
+  strokeWidth: -1
   fillColor: isRenderable ? Qt.rgba(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a * opacityFactor) : "transparent"
   fillRule: isFramed ? ShapePath.OddEvenFill : ShapePath.WindingFill
 

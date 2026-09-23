@@ -17,10 +17,14 @@ import qs.Services.UI
 PanelWindow {
   id: barWindow
 
+  // Keep a small alpha mask as the bar becomes translucent so Hyprland's
+  // native layer blur always has a surface to work with.
+  readonly property real blurMaskOpacity: Math.max(0.02, Math.min(0.12, (1 - Settings.data.bar.backgroundOpacity) * 0.1))
+
   // Note: screen property is inherited from PanelWindow and should be set by parent
   // When peeking over a fullscreen client, MainScreen remains below that
   // client. Give this compact overlay surface its own background instead.
-  color: BarService.fullscreenOverlayActive ? Qt.alpha(Color.mSurface, Settings.data.bar.useSeparateOpacity ? Style.effectiveBarOpacity : Style.effectivePanelOpacity) : "transparent"
+  color: BarService.fullscreenOverlayActive ? Qt.alpha(Style.barBackgroundColor, Math.max(Settings.data.bar.useSeparateOpacity ? Style.effectiveBarOpacity : Style.effectivePanelOpacity, blurMaskOpacity)) : Qt.alpha("#000000", blurMaskOpacity)
 
   // Window invisible when auto-hidden (blocks input) or toggled off via IPC.
   property bool windowVisible: !isHidden

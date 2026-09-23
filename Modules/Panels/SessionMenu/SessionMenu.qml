@@ -22,7 +22,7 @@ SmartPanel {
   blurEnabled: !largeButtonsStyle
 
   // Make panel background transparent for large buttons style
-  panelBackgroundColor: largeButtonsStyle ? "transparent" : Color.mSurface
+  panelBackgroundColor: largeButtonsStyle ? "transparent" : Style.panelBackgroundColor
 
   preferredWidth: largeButtonsStyle ? 0 : Math.round(440 * Style.uiScaleRatio)
   preferredWidthRatio: largeButtonsStyle ? 1.0 : 0

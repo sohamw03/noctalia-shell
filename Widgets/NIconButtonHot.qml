@@ -82,10 +82,10 @@ Rectangle {
       }
       return colorFg;
     }
-    // Center horizontally
-    x: (root.width - width) / 2
-    // Center vertically accounting for font metrics
-    y: (root.height - height) / 2 + (height - contentHeight) / 2
+    // Nudge the advance box toward the left half-pixel. Rounding an odd
+    // button/even glyph pair places the glyph one pixel to the right.
+    x: Math.floor((root.width - width) / 2)
+    y: Style.pixelAlignCenter(root.height, contentHeight)
 
     Behavior on color {
       enabled: !Color.isTransitioning

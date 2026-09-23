@@ -53,6 +53,26 @@ Variants {
       }
     }
 
+    // Crisp bar edge highlight lives above the blurred background layer.
+    Loader {
+      active: {
+        if (!parent.windowLoaded || !parent.shouldBeActive)
+          return false;
+
+        var monitors = Settings.data.bar.monitors || [];
+        return monitors.length === 0 || monitors.includes(modelData?.name);
+      }
+      asynchronous: false
+
+      sourceComponent: BarHighlightWindow {
+        screen: modelData
+      }
+
+      onLoaded: {
+        Logger.d("AllScreens", "BarHighlightWindow created for", modelData?.name);
+      }
+    }
+
     // Bar content in separate windows to prevent fullscreen redraws
     // Note: Window stays alive when bar is hidden (visible=false) to avoid
     // rapid Wayland surface destruction/creation that can crash compositors.

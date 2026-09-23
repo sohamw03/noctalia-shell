@@ -112,6 +112,11 @@ Variants {
         source: launcherPanel
         anchors.fill: launcherPanel
         autoPaddingEnabled: true
+        forceEnabled: true
+        shadowOpacity: 0.18
+        shadowBlur: 6
+        shadowHorizontalOffset: 0
+        shadowVerticalOffset: 2
       }
 
       // Launcher panel with position-based anchoring
@@ -255,7 +260,7 @@ Variants {
 
           ShapePath {
             strokeWidth: -1
-            fillColor: Qt.alpha(Color.mSurface, Color.adaptiveOpacity(Settings.data.ui.panelBackgroundOpacity))
+            fillColor: Qt.alpha(Style.panelBackgroundColor, Color.adaptiveOpacity(Settings.data.ui.panelBackgroundOpacity))
 
             // Offset by radius to account for Shape's extended bounds
             startX: panelShape.radius + panelShape.radius * panelShape.tlMultX
@@ -321,8 +326,8 @@ Variants {
           anchors.fill: parent
           color: "transparent"
           radius: Style.radiusL
-          border.color: Style.boxBorderColor
-          border.width: Style.borderS
+          border.color: Qt.alpha(Color.mOnSurface, 0.08)
+          border.width: 1
           visible: !launcherPanel.touchingLeft && !launcherPanel.touchingRight && !launcherPanel.touchingTop && !launcherPanel.touchingBottom
         }
 

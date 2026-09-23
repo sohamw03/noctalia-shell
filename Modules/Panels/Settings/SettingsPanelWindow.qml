@@ -116,10 +116,23 @@ FloatingWindow {
   }
 
   // Main content
-  Rectangle {
+  NDropShadow {
     anchors.fill: parent
-    color: Qt.alpha(Color.mSurface, Settings.data.ui.panelBackgroundOpacity)
+    source: settingsSurface
+    forceEnabled: true
+    shadowOpacity: 0.18
+    shadowBlur: 6
+    shadowHorizontalOffset: 0
+    shadowVerticalOffset: 2
+  }
+
+  Rectangle {
+    id: settingsSurface
+    anchors.fill: parent
+    color: Qt.alpha(Style.panelBackgroundColor, Settings.data.ui.panelBackgroundOpacity)
     radius: Style.radiusL
+    border.width: 1
+    border.color: Qt.alpha(Color.mOnSurface, 0.08)
 
     SettingsContent {
       id: settingsContent

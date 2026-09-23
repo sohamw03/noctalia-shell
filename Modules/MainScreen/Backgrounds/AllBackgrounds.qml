@@ -23,7 +23,10 @@ Item {
   // Reference to MainScreen (for panel access)
   required property var windowRoot
 
-  readonly property color panelBackgroundColor: Color.mSurface
+  readonly property color panelBackgroundColor: Style.panelBackgroundColor
+  readonly property string barPosition: root.bar?.barPosition || Settings.data.bar.position
+  readonly property real barShadowHorizontalOffset: 0
+  readonly property real barShadowVerticalOffset: 0
 
   anchors.fill: parent
 
@@ -58,7 +61,7 @@ Item {
           bar: root.bar
           shapeContainer: unifiedBackgroundsShape
           windowRoot: root.windowRoot
-          backgroundColor: panelBackgroundColor
+          backgroundColor: Style.barBackgroundColor
         }
 
         /**
@@ -93,6 +96,11 @@ Item {
       NDropShadow {
         anchors.fill: parent
         source: unifiedBackgroundsShape
+        forceEnabled: true
+        shadowOpacity: 0.08
+        shadowBlur: 8
+        shadowHorizontalOffset: root.barShadowHorizontalOffset
+        shadowVerticalOffset: root.barShadowVerticalOffset
       }
     }
 
@@ -147,6 +155,11 @@ Item {
         NDropShadow {
           anchors.fill: parent
           source: panelBackgroundsShape
+          forceEnabled: true
+          shadowOpacity: 0.18
+          shadowBlur: 6
+          shadowHorizontalOffset: 0
+          shadowVerticalOffset: 2
         }
       }
 
@@ -168,13 +181,18 @@ Item {
             bar: root.bar
             shapeContainer: barBackgroundShape
             windowRoot: root.windowRoot
-            backgroundColor: panelBackgroundColor
+            backgroundColor: Style.barBackgroundColor
           }
         }
 
         NDropShadow {
           anchors.fill: parent
           source: barBackgroundShape
+          forceEnabled: true
+          shadowOpacity: 0.0
+          shadowBlur: 8
+          shadowHorizontalOffset: root.barShadowHorizontalOffset
+          shadowVerticalOffset: root.barShadowVerticalOffset
         }
       }
     }

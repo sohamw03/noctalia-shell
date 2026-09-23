@@ -10,13 +10,14 @@ Item {
   required property var source
 
   property bool autoPaddingEnabled: false
+  property bool forceEnabled: false
   property real shadowHorizontalOffset: Settings.data.general.shadowOffsetX
   property real shadowVerticalOffset: Settings.data.general.shadowOffsetY
   property real shadowOpacity: Style.shadowOpacity
   property color shadowColor: "black"
   property real shadowBlur: Style.shadowBlur
 
-  layer.enabled: Settings.data.general.enableShadows && !PowerProfileService.noctaliaPerformanceMode
+  layer.enabled: (Settings.data.general.enableShadows || root.forceEnabled) && !PowerProfileService.noctaliaPerformanceMode
   layer.effect: MultiEffect {
     source: root.source
     shadowEnabled: true

@@ -70,8 +70,9 @@ Item {
       pointSize: Style.toOdd(visualButton.width * 0.48)
       applyUiScale: root.applyUiScale
       color: root.enabled && root.pressed ? colorFgPressed : (root.enabled && root.visuallyHovered ? colorFgHover : colorFg)
-      // Pixel-perfect centering
-      x: Style.pixelAlignCenter(visualButton.width, width)
+      // Nudge the advance box toward the left half-pixel. Rounding an odd
+      // button/even glyph pair places the glyph one pixel to the right.
+      x: Math.floor((visualButton.width - width) / 2)
       y: Style.pixelAlignCenter(visualButton.height, contentHeight)
 
     }

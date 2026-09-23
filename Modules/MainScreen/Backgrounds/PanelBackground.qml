@@ -26,7 +26,7 @@ ShapePath {
   required property var shapeContainer
 
   // Default background color (used if panel doesn't specify one)
-  property color defaultBackgroundColor: Color.mSurface
+  property color defaultBackgroundColor: Style.panelBackgroundColor
 
   // Corner radius (from Style)
   readonly property real radius: Style.radiusL
@@ -91,7 +91,10 @@ ShapePath {
   readonly property real blRadius: panelBg ? getCornerRadius(panelBg.bottomLeftCornerState) : 0
 
   // ShapePath configuration
-  strokeWidth: -1 // No stroke, fill only
+  // Keep primary panels on the same subtle elevated surface as the bar.
+  readonly property bool hasVisibleBackground: isRenderable && effectiveBackgroundColor.a > 0
+  strokeWidth: hasVisibleBackground ? Math.max(1, Style.uiScaleRatio) : -1
+  strokeColor: hasVisibleBackground ? Qt.alpha(Color.mOnSurface, 0.08) : "transparent"
 
   // Start point - use tiny off-screen non-degenerate fallback when not renderable.
   // Fallback forms a 1×1 off-screen square where each edge is split between a PathLine

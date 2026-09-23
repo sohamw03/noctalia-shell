@@ -23,7 +23,7 @@ Item {
   property real preferredHeight: 900
   property real preferredWidthRatio
   property real preferredHeightRatio
-  property color panelBackgroundColor: Color.mSurface
+  property color panelBackgroundColor: Style.panelBackgroundColor
   property color panelBorderColor: Color.mOutline
   property var buttonItem: null
   property bool forceAttachToBar: false
